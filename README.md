@@ -238,9 +238,3 @@ External integrations (national immigration databases, production blockchain net
 ## 📜 License
 
 MIT License – Academic & Research Use
-
-````
-
-Next (optional but powerful for your thesis):  
-I can give you a **professional architecture diagram image (PNG/SVG)** you can paste into your thesis PDF instead of Mermaid.
-````
