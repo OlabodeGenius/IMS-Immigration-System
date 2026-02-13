@@ -35,21 +35,20 @@ Final Year Research Project:
 
 ```mermaid
 flowchart TD
-  A[Student / Institution] -->|Web| B[React Frontend]
-  C[Immigration Authority] -->|Admin| B
-  D[Verifier / Police] -->|QR Scan| E[Verification Interface]
+  A[International Student] --> B[React Web App]
+  C[Immigration Authority] --> B
+  D[Authorized Verifier] --> E[QR Verification Interface]
 
-  B -->|API| F[Supabase Backend]
-  E -->|Verify Token| G[Verification API]
+  B --> F[Supabase Backend]
+  E --> G[Verification API]
 
-  F --> H[(PostgreSQL)]
-  H --> I[students]
-  H --> J[visas]
-  H --> K[student_cards]
-  H --> L[audit_logs]
-  H --> M[verification_requests]
+  F --> H[PostgreSQL Database]
+  H --> I[Students Table]
+  H --> J[Visas Table]
+  H --> K[Student Cards]
+  H --> L[Audit Logs]
 
-  G --> N[Blockchain Hash Ledger (Simulated)]
+  G --> N[Blockchain Integrity Ledger]
 
 
 
