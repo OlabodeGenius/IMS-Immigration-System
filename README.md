@@ -1,154 +1,187 @@
 # Immigration Management System for International Students (IMS-IS)
 
-![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![React](https://img.shields.io/badge/frontend-React%20%2B%20TypeScript-61DAFB)
-![Supabase](https://img.shields.io/badge/backend-Supabase-3ECF8E)
-![Blockchain](https://img.shields.io/badge/integrity-Blockchain%20Hashing-orange)
-![ML](https://img.shields.io/badge/analytics-Machine%20Learning-purple)
-![Security](https://img.shields.io/badge/security-RLS%20%2B%20JWT-red)
-![Status](https://img.shields.io/badge/status-Thesis%20Prototype-informational)
+A secure, blockchain-backed and machine learning–enhanced immigration management platform designed to modernize the registration, verification, and visa lifecycle management of international students in Kazakhstan.
 
-A secure, blockchain-backed and machine learning–ready platform for registration, verification, and visa lifecycle management of international students in Kazakhstan.
+This project is developed as a full-stack academic and functional prototype, integrating Web Technologies, Supabase Backend, Role-Based Access Control (RLS), and QR-based Digital Identity Verification to address inefficiencies in traditional immigration workflows.
 
 ---
 
 ## 🎓 Thesis Context
 
-Final Year Research Project:
+This system is part of a Final Year Research Project titled:
 
 > **“Designing the System for Immigration Management in Kazakhstan Using Blockchain Technologies and Machine Learning Algorithms”**
+
+The platform focuses specifically on international students, aiming to solve real-world issues such as:
+
+* Repetitive biometric registrations
+* Manual visa renewals
+* Physical passport dependency for verification
+* Fragmented data between universities and immigration authorities
+* Lack of tamper-proof identity validation
 
 ---
 
 ## 🚀 Key Features
 
-- **Digital Student Identity:** QR-based student card + tamper-evident record hashing  
-- **Visa Lifecycle Management:** track visa status, expiry, renewals (prototype)  
-- **Institution Portal:** universities register/manage students  
-- **Verification Portal:** police/authorized verifiers scan QR for real-time validation  
-- **ML-Ready:** designed for future risk & expiry prediction models  
+### 🔐 Digital Student Identity System
+
+* Blockchain-hashed student ID records
+* Physical Digital ID Card with embedded QR verification
+* Tamper-evident identity validation
+
+### 🛂 Immigration & Visa Management
+
+* Student visa lifecycle tracking (C3 Category)
+* Visa renewal monitoring & notifications
+* Secure immigration database integration (simulated)
+
+### 🏫 Institutional Integration
+
+* Universities register and manage international students
+* Attendance and compliance monitoring
+* Institutional dashboard analytics
+
+### 📱 QR-Based Verification Mechanism
+
+* QR Code embedded with signed verification token
+* Real-time validation via backend API
+* Minimal privacy exposure (GDPR-aware)
+
+### 🤖 Smart Analytics (ML-Ready Architecture)
+
+* Visa expiry prediction (simulated dataset)
+* Fraud detection architecture (extensible)
+* Compliance risk analytics module
 
 ---
 
-## 🏗️ System Architecture
+## 🧱 System Architecture
 
-```mermaid
-flowchart TD
-  A[International Student] --> B[React Web App]
-  C[Immigration Authority] --> B
-  D[Authorized Verifier] --> E[QR Verification Interface]
-
-  B --> F[Supabase Backend]
-  E --> G[Verification API]
-
-  F --> H[PostgreSQL Database]
-  H --> I[Students Table]
-  H --> J[Visas Table]
-  H --> K[Student Cards]
-  H --> L[Audit Logs]
-
-  G --> N[Blockchain Integrity Ledger]
-
-
-
-  Got you — your README currently includes a big **unnecessary duplicated chunk** (the part where it says “Here’s a cleaned-up…” and then re-pastes the whole README inside the README). Also the Mermaid block must be **closed** before any text continues.
-
-Here’s a **short, important, clean README** you can use (keeps only what matters for GitHub + thesis prototype).
-
-````md
-# Immigration Management System for International Students (IMS-IS)
-
-![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![React](https://img.shields.io/badge/frontend-React%20%2B%20TypeScript-61DAFB)
-![Supabase](https://img.shields.io/badge/backend-Supabase-3ECF8E)
-![Blockchain](https://img.shields.io/badge/integrity-Blockchain%20Hashing-orange)
-![ML](https://img.shields.io/badge/analytics-Machine%20Learning-purple)
-![Security](https://img.shields.io/badge/security-RLS%20%2B%20JWT-red)
-![Status](https://img.shields.io/badge/status-Thesis%20Prototype-informational)
-
-A secure, blockchain-backed and machine learning–ready platform for registration, verification, and visa lifecycle management of international students in Kazakhstan.
+```
+Frontend (React + MUI)
+        │
+        ▼
+Supabase (Auth + PostgreSQL + RLS + Edge Functions)
+        │
+        ├── Blockchain Hash Layer (Simulated Ledger)
+        ├── Verification API (QR Scan Endpoint)
+        └── Audit & Verification Logs
+```
 
 ---
 
-## 🎓 Thesis Context
+## 🛠️ Technology Stack
 
-Final Year Research Project:
+### Frontend
 
-> **“Designing the System for Immigration Management in Kazakhstan Using Blockchain Technologies and Machine Learning Algorithms”**
+* React + TypeScript
+* Vite
+* Material UI (MUI)
+* React Hook Form + Zod (Validation)
+* TanStack Query (Server State)
 
----
+### Backend
 
-## 🚀 Key Features
+* Supabase (PostgreSQL + Auth + RLS)
+* Supabase Edge Functions (Verification API)
+* Row-Level Security (Government-grade access control)
 
-- **Digital Student Identity:** QR-based student card + tamper-evident record hashing  
-- **Visa Lifecycle Management:** track visa status, expiry, renewals (prototype)  
-- **Institution Portal:** universities register/manage students  
-- **Verification Portal:** police/authorized verifiers scan QR for real-time validation  
-- **ML-Ready:** designed for future risk & expiry prediction models  
+### Security & Integrity
 
----
+* Blockchain Hash Storage (Record Integrity)
+* JWT-based Authentication
+* Role-Based Access Control (IMMIGRATION / INSTITUTION)
 
-## 🏗️ System Architecture
+### Mobile (Planned Extension)
 
-```mermaid
-flowchart TD
-  A[Student / Institution] -->|Web| B[React Frontend]
-  C[Immigration Authority] -->|Admin| B
-  D[Verifier / Police] -->|QR Scan| E[Verification Interface]
-
-  B -->|API| F[Supabase Backend]
-  E -->|Verify Token| G[Verification API]
-
-  F --> H[(PostgreSQL)]
-  H --> I[students]
-  H --> J[visas]
-  H --> K[student_cards]
-  H --> L[audit_logs]
-  H --> M[verification_requests]
-
-  G --> N[Blockchain Hash Ledger (Simulated)]
-````
+* Android (Kotlin/React Native compatible architecture)
 
 ---
 
-## 🛠️ Tech Stack
+## 👥 User Roles
 
-* **Frontend:** React + TypeScript + Vite + MUI
-* **Backend:** Supabase (PostgreSQL + Auth + RLS + Edge Functions)
-* **Integrity Layer:** Blockchain hashing (prototype / simulated)
-* **Analytics:** ML module (planned)
-
----
-
-## 👥 Roles
-
-| Role                  | Permissions                       |
-| --------------------- | --------------------------------- |
-| Immigration Authority | full oversight, audits, approvals |
-| Institution           | register/manage students          |
-| Authorized Verifier   | QR verification (read-only)       |
-| Student               | view digital ID + visa status     |
+| Role                            | Permissions                                            |
+| ------------------------------- | ------------------------------------------------------ |
+| Immigration Authority           | Full system control, verification logs, visa oversight |
+| Institution (University/School) | Register students, manage visas, monitor compliance    |
+| Authorized Verifier (Police)    | QR-based student legitimacy verification (read-only)   |
+| International Student           | Digital ID holder & visa lifecycle tracking            |
 
 ---
 
-## ⚙️ Setup
+## 🔎 QR Verification Workflow
+
+1. Physical Digital ID Card contains QR Code
+2. QR encodes a signed, time-bound verification URL
+3. Verifier scans QR (Police/Authority)
+4. Backend validates:
+
+   * Token authenticity
+   * Card status
+   * Visa validity
+   * Blockchain record hash
+5. System returns minimal verification data:
+
+   * Validity Status
+   * Institution Name
+   * Visa Status & Expiry
+
+---
+
+## 🔐 Database Security (RLS Enabled)
+
+This system implements PostgreSQL Row-Level Security to enforce strict data governance:
+
+* Immigration: Full read/write access
+* Institutions: Access only to their registered students
+* Verification Logs: Restricted to Immigration Authority
+* Audit Logs: Immutable tracking of system actions
+
+---
+
+## 📂 Project Structure
+
+```
+ims-web/
+├── src/
+│   ├── auth/            # Authentication & Protected Routes
+│   ├── components/      # Reusable UI Components
+│   ├── hooks/           # Data fetching & business logic hooks
+│   ├── pages/           # Main system pages (Dashboard, Landing, Login)
+│   ├── profile/         # Role & profile management
+│   ├── lib/             # Supabase client & utilities
+│   ├── types/           # Database and DTO types
+│   └── router/          # Application routing
+```
+
+---
+
+## ⚙️ Installation & Setup
+
+### 1️⃣ Clone Repository
 
 ```bash
 git clone https://github.com/your-username/ims-is.git
 cd ims-is
+```
+
+### 2️⃣ Install Dependencies
+
+```bash
 npm install
 ```
 
-Create `.env`:
+### 3️⃣ Configure Environment Variables
+
+Create `.env` file:
 
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-Run:
+### 4️⃣ Run Development Server
 
 ```bash
 npm run dev
@@ -156,13 +189,57 @@ npm run dev
 
 ---
 
+## 🗄️ Supabase Configuration (Required)
+
+* Enable Authentication (Email/Password)
+* Disable Email Confirmation (for prototype testing)
+* Execute SQL Schema (Tables + RLS Policies)
+* Create Profiles for Roles (IMMIGRATION / INSTITUTION)
+
+---
+
+## 📊 Evaluation & Testing
+
+The system was evaluated using a controlled experimental dataset simulating:
+
+* Student registrations
+* Visa lifecycle events
+* QR verification requests
+* Fraud and expiry scenarios
+
+Performance Metrics:
+
+* Verification Response Time
+* Data Integrity Accuracy
+* Role-Based Access Enforcement
+* System Scalability (Concurrent Requests)
+
+---
+
+## 🔬 Research Contribution (Scientific Novelty)
+
+* Blockchain-integrated digital immigration identity model
+* ML-ready predictive visa analytics framework
+* QR-based tamper-evident verification architecture
+* Centralized multi-stakeholder immigration platform for Kazakhstan
+
+---
+
 ## ⚠️ Disclaimer
 
-This is an academic prototype. External integrations and real blockchain deployment are simulated.
+This project is a functional academic prototype developed for research and educational purposes. External integrations (banking systems, national immigration databases, blockchain networks) are simulated.
 
 ---
 
 ## 📜 License
 
-MIT
+MIT License – For academic and research use.
+
+---
+
+## 👨‍💻 Authors
+
+Final Year Thesis Project Team
+Focus Area: Blockchain, Machine Learning, and E-Government Systems
+Kazakhstan (International Student Immigration Context)
 
