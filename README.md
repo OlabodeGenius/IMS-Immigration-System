@@ -1,4 +1,3 @@
-````md
 # Immigration Management System for International Students (IMS-IS)
 
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
