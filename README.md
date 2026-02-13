@@ -69,28 +69,28 @@ The architecture is designed to be extensible for machine learning integration, 
 
 ```mermaid
 flowchart TD
-    A[International Student / Institution User] -->|Web Access| B[React Frontend (Vite + MUI)]
-    C[Immigration Authority] -->|Admin Access| B
-    D[Authorized Verifier / Police] -->|QR Scan| E[Verification Interface]
+  A[International Student / Institution User] -->|Web Access| B[React Frontend (Vite + MUI)]
+  C[Immigration Authority] -->|Admin Access| B
+  D[Authorized Verifier / Police] -->|QR Scan| E[Verification Interface]
 
-    B -->|API Calls| F[Supabase Backend]
-    E -->|Verify QR Token| G[Verification API (Edge Function / API Route)]
+  B -->|API Calls| F[Supabase Backend]
+  E -->|Verify QR Token| G[Verification API (Edge Function / API Route)]
 
-    F --> H[(PostgreSQL Database)]
-    H --> I[students]
-    H --> J[visas]
-    H --> K[student_cards]
-    H --> L[audit_logs]
-    H --> M[verification_requests]
+  F --> H[(PostgreSQL Database)]
+  H --> I[students]
+  H --> J[visas]
+  H --> K[student_cards]
+  H --> L[audit_logs]
+  H --> M[verification_requests]
 
-    G --> H
-    G --> N[Blockchain Hash Ledger (Simulated)]
+  G --> H
+  G --> N[Blockchain Hash Ledger (Simulated)]
 
-    F --> O[Auth Service (JWT)]
-    O --> P[Row-Level Security Policies (RLS)]
+  F --> O[Auth Service (JWT)]
+  O --> P[Row-Level Security Policies (RLS)]
 
-    F --> Q[ML Analytics Module (Future)]
-    Q --> R[Prediction Engine: Expiry & Risk Detection]
+  F --> Q[ML Analytics Module (Future)]
+  Q --> R[Prediction Engine: Expiry & Risk Detection]
 
 
 Here’s a cleaned-up, consistent, properly structured README. I fixed:
