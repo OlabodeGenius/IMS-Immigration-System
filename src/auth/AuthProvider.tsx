@@ -7,6 +7,8 @@ type AuthContextValue = {
     profile: Profile | null;
     loading: boolean;
     signOut: () => Promise<void>;
+    signIn: (email: string, password: string) => Promise<void>;
+    signUp: (email: string, password: string, metadata?: { full_name: string; role: 'IMMIGRATION' | 'INSTITUTION' }) => Promise<any>;
 };
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
@@ -58,12 +60,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
     }, []);
 
+    const signIn = async (email: string, password: string) => {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+    };
+
+    const signUp = async (email: string, password: string, metadata?: { full_name: string; role: 'IMMIGRATION' | 'INSTITUTION' }) => {
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: metadata
+            }
+        });
+
+        if (error) throw error;
+
+        // If your DB has a trigger to create profiles from auth.users, this might be redundant.
+        // But many IMS setups use a manual insert or a trigger. 
+        // Based on previous history, we manually insert profiles if the trigger isn't there.
+        if (data.user && metadata) {
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .insert({
+                    user_id: data.user.id,
+                    full_name: metadata.full_name,
+                    role: metadata.role
+                });
+            if (profileError) console.error("Profile creation error:", profileError);
+        }
+
+        return data;
+    };
+
     const signOut = async () => {
-        await supabase.auth.signOut();
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
     };
 
     return (
-        <AuthContext.Provider value={{ user, profile, loading, signOut }}>
+        <AuthContext.Provider value={{ user, profile, loading, signOut, signIn, signUp }}>
             {children}
         </AuthContext.Provider>
     );

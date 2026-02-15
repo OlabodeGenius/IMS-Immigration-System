@@ -1,12 +1,20 @@
 import { Container, Paper, Stack, Typography, Button, Alert, Chip } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { DataTable } from "../components/DataTable";
 import { useProfile } from "../profile/useProfile";
 import { useStudents } from "../hooks/useStudents";
+import { useIssueStudentCard } from "../hooks/useStudentCards";
+import { useSnackbar } from "notistack";
 
 export default function StudentsPage() {
     const nav = useNavigate();
+    const location = useLocation();
+    const { enqueueSnackbar } = useSnackbar();
+    const issueCard = useIssueStudentCard();
     const { data: profile, isLoading: profileLoading } = useProfile();
+
+    const searchParams = new URLSearchParams(location.search);
+    const urlQuery = searchParams.get("search") || "";
 
     const isInstitution = profile?.role === "INSTITUTION";
 
@@ -49,6 +57,7 @@ export default function StudentsPage() {
                 data={data ?? []}
                 isLoading={isLoading || profileLoading}
                 searchPlaceholder="Search students..."
+                initialSearch={urlQuery}
                 onRowClick={(row) => nav(`/students/${row.id}`)}
                 columns={[
                     { id: "student_id_number", label: "Student ID" },
@@ -87,6 +96,27 @@ export default function StudentsPage() {
                             return v?.end_date ?? "—";
                         },
                     },
+                    {
+                        id: "actions",
+                        label: "Actions",
+                        render: (row: any) => (
+                            <Stack direction="row" spacing={1}>
+                                <Button
+                                    size="small"
+                                    variant="contained"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        issueCard.mutate(row.id, {
+                                            onSuccess: () => enqueueSnackbar("Digital card issued successfully", { variant: "success" }),
+                                            onError: (err: any) => enqueueSnackbar(err.message || "Failed to issue card", { variant: "error" })
+                                        });
+                                    }}
+                                >
+                                    Issue Card
+                                </Button>
+                            </Stack>
+                        ),
+                    }
                 ]}
             />
         </Container>

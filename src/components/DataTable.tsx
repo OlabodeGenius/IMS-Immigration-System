@@ -34,6 +34,7 @@ interface DataTableProps<T> {
     onRowClick?: (row: T) => void;
     searchable?: boolean;
     filterContent?: React.ReactNode;
+    initialSearch?: string;
 }
 
 export function DataTable<T extends { id: string }>({
@@ -44,10 +45,11 @@ export function DataTable<T extends { id: string }>({
     onRowClick,
     searchable = true,
     filterContent,
+    initialSearch = "",
 }: DataTableProps<T>) {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchQuery, setSearchQuery] = useState(initialSearch);
 
     const filteredData = useMemo(() => {
         if (!searchQuery) return data;

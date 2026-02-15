@@ -20,14 +20,20 @@ export function VerificationTab() {
         { id: "verification_type", label: "Type" },
         {
             id: "result",
-            label: "Result",
-            render: (row: VerificationRequest) => {
-                const status = row.result?.status || "UNKNOWN";
+            label: "Status",
+            render: (row: any) => {
+                const result = row.result;
+                const status = typeof result === 'string' ? result : (result?.status || "UNKNOWN");
+
+                const isSuccess = status === 'VALID' || status === 'VERIFIED';
+                const isError = status === 'INVALID' || status === 'REJECTED';
+
                 return (
                     <Chip
                         label={status}
-                        color={status === 'VERIFIED' ? 'success' : 'warning'}
+                        color={isSuccess ? 'success' : (isError ? 'error' : 'warning')}
                         size="small"
+                        sx={{ fontWeight: 700 }}
                     />
                 );
             }

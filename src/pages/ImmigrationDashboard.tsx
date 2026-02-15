@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { Tabs, Tab, Box } from "@mui/material";
 import { DashboardShell } from "../components/DashboardShell";
 import { InstitutionsTab } from "../components/dashboard/immigration/InstitutionsTab";
@@ -38,8 +38,10 @@ export default function ImmigrationDashboard() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Parse tab from URL or default to 0
+    // Parse tab and search from URL
     const queryParams = new URLSearchParams(location.search);
+    const urlSearch = queryParams.get("search") || "";
+
     const tabValue = useMemo(() => {
         const tab = queryParams.get('tab');
         if (tab === 'overview') return 0;
@@ -56,7 +58,7 @@ export default function ImmigrationDashboard() {
     };
 
     return (
-        <DashboardShell>
+        <DashboardShell title="National Oversight Platform">
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
                 <Tabs value={tabValue} onChange={handleTabChange} aria-label="dashboard tabs" textColor="primary" indicatorColor="primary">
                     <Tab label="Dashboard" />
@@ -71,7 +73,7 @@ export default function ImmigrationDashboard() {
                 <OverviewTab />
             </TabPanel>
             <TabPanel value={tabValue} index={1}>
-                <StudentsTab />
+                <StudentsTab initialSearch={urlSearch} />
             </TabPanel>
             <TabPanel value={tabValue} index={2}>
                 <InstitutionsTab />

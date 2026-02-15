@@ -188,7 +188,6 @@ export function StudentForm({ onSubmit, isLoading = false, defaultValues }: Stud
                                     helperText={errors.visa?.visa_type?.message}
                                 >
                                     <MenuItem value="C9">C9 (Student)</MenuItem>
-                                    <MenuItem value="C3">C3 (Work)</MenuItem>
                                 </TextField>
                             )}
                         />

@@ -86,6 +86,16 @@ export function useStudentRegistration() {
                 throw visaError;
             }
 
+            // 3️⃣ Audit Log (MATCHES DB table: audit_logs)
+            const { data: userData } = await supabase.auth.getUser();
+            await supabase.from("audit_logs").insert({
+                user_id: userData.user?.id,
+                action: "CREATE",
+                table_name: "students",
+                record_id: student_id,
+                changes: { payload }
+            });
+
             return { student_id };
         },
     });

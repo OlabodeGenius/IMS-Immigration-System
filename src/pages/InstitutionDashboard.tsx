@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { Tabs, Tab, Box } from "@mui/material";
 import { DashboardShell } from "../components/DashboardShell";
 import { OverviewTab } from "../components/dashboard/institution/OverviewTab";
@@ -42,8 +42,10 @@ export default function InstitutionDashboard() {
     const { profile } = useAuth();
     const { data: institution } = useInstitution(profile?.institution_id || "");
 
-    // Parse tab from URL or default to 0
+    // Parse tab and search from URL
     const queryParams = new URLSearchParams(location.search);
+    const urlSearch = queryParams.get("search") || "";
+
     const tabValue = useMemo(() => {
         const tab = queryParams.get('tab');
         if (tab === 'students') return 1;
@@ -55,8 +57,11 @@ export default function InstitutionDashboard() {
 
     const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         const tabs = ['overview', 'students', 'register', 'attendance', 'alerts'];
+        // When switching tabs, we might want to clear search if not students.
+        // For now, let's just navigate to the tab.
         navigate(`/dashboard?tab=${tabs[newValue]}`);
     };
+
 
     const dashboardTitle = institution ? `${institution.name} Portal` : "Institution Portal";
 
@@ -76,7 +81,7 @@ export default function InstitutionDashboard() {
                 <OverviewTab institutionId={profile?.institution_id || undefined} />
             </TabPanel>
             <TabPanel value={tabValue} index={1}>
-                <MyStudentsTab />
+                <MyStudentsTab initialSearch={urlSearch} />
             </TabPanel>
             <TabPanel value={tabValue} index={2}>
                 <RegisterStudentTab />
