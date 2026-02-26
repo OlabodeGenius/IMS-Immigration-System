@@ -39,7 +39,7 @@ export function StudentCardDialog({ open, studentId, onClose }: StudentCardDialo
         }
     }, [open, card?.id, mintToken]);
 
-    const isLoading = cardLoading || loadingToken;
+    const isLoading = cardLoading;
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md">
@@ -54,25 +54,35 @@ export function StudentCardDialog({ open, studentId, onClose }: StudentCardDialo
                     <Box sx={{ py: 10 }}>
                         <CircularProgress />
                     </Box>
-                ) : card && card.status === "ACTIVE" && token ? (
+                ) : card && card.status === "ACTIVE" ? (
                     <DigitalStudentCard
                         open={open}
                         onClose={onClose}
                         student={{
-                            id: card.card_number,
-                            fullName: card.student.full_name,
-                            dateOfBirth: card.student.date_of_birth,
-                            sex: (card.student as any).sex || card.student.metadata?.sex || "—",
-                            nationality: card.student.nationality,
-                            photo: card.student.photo_url,
-                            schoolName: card.institution.name,
-                            schoolAddress: card.institution.address || "—",
-                            schoolLogo: card.institution.logo_url,
-                            cityRegion: card.institution.city || "Almaty",
-                            phoneNumber: card.student.phone || "—",
+                            id: card.card_number || card.id,
+                            schoolId: Array.isArray(card.student) ? card.student[0]?.student_id_number : card.student?.student_id_number || "—",
+                            iin: Array.isArray(card.student) ? card.student[0]?.passport_number : card.student?.passport_number || "—",
+                            fullName: Array.isArray(card.student) ? card.student[0]?.full_name : card.student?.full_name || "—",
+                            dateOfBirth: Array.isArray(card.student) ? card.student[0]?.date_of_birth : card.student?.date_of_birth || "—",
+                            sex: Array.isArray(card.student)
+                                ? (card.student[0]?.sex || card.student[0]?.metadata?.sex || "—")
+                                : (card.student?.sex || (card.student?.metadata as any)?.sex || "—"),
+                            nationality: Array.isArray(card.student) ? card.student[0]?.nationality : card.student?.nationality || "—",
+                            photo: Array.isArray(card.student) ? card.student[0]?.photo_url : card.student?.photo_url,
+                            schoolName: Array.isArray(card.institution) ? card.institution[0]?.name : card.institution?.name || "—",
+                            schoolAddress: Array.isArray(card.institution) ? card.institution[0]?.address || "—" : card.institution?.address || "—",
+                            schoolLogo: Array.isArray(card.institution) ? card.institution[0]?.logo_url : card.institution?.logo_url,
+                            cityRegion: Array.isArray(card.institution) ? card.institution[0]?.city || "Almaty" : card.institution?.city || "Almaty",
+                            phoneNumber: Array.isArray(card.student) ? card.student[0]?.phone || "—" : card.student?.phone || "—",
                             dateOfIssue: new Date(card.issued_at).toLocaleDateString(),
-                            dateOfExpiry: card.expires_at ? new Date(card.expires_at).toLocaleDateString() : (card.student.visa?.end_date ? new Date(card.student.visa.end_date).toLocaleDateString() : "—"),
-                            qrData: `${window.location.origin}/verify?t=${token}`,
+                            dateOfExpiry: card.expires_at
+                                ? new Date(card.expires_at).toLocaleDateString()
+                                : (Array.isArray(card.student)
+                                    ? (card.student[0]?.visa?.end_date ? new Date(card.student[0].visa.end_date).toLocaleDateString() : "—")
+                                    : (card.student?.visa?.end_date ? new Date(card.student.visa.end_date).toLocaleDateString() : "—")),
+                            qrData: token
+                                ? `${window.location.origin}/verify?t=${token}`
+                                : `${window.location.origin}/verify?card=${card.id}&hash=${card.blockchain_tx_id || card.record_hash || 'pending'}`,
                         }}
                     />
                 ) : card ? (

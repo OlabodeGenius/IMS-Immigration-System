@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabaseClient";
-import type { Institution } from "../types/database.types";
+import type { Institution } from "../types";
 
 // ===================================
 // Fetch Hooks

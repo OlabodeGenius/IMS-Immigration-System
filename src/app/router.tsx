@@ -9,12 +9,10 @@ import StudentsPage from "../pages/StudentsPage";
 import StudentDetailsPage from "../pages/StudentDetailsPage";
 import SettingsPage from "../pages/SettingsPage";
 import Verify from "../pages/Verify";
-
-import DesignTest from "../pages/DesignTest";
+import IssueCardPage from "../pages/IssueCardPage";
 
 export const router = createBrowserRouter([
     { path: "/", element: <Landing /> },
-    { path: "/design-test", element: <DesignTest /> },
     { path: "/login", element: <Login /> },
     { path: "/register", element: <Register /> },
     {
@@ -46,6 +44,14 @@ export const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <StudentDetailsPage />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/students/:id/issue-card",
+        element: (
+            <ProtectedRoute>
+                <IssueCardPage />
             </ProtectedRoute>
         ),
     },

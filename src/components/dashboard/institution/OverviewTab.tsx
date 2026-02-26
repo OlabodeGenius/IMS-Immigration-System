@@ -21,7 +21,8 @@ import {
     People as StudentsIcon
 } from '@mui/icons-material';
 import { useNavigate } from "react-router-dom";
-import { useInstitutionMetrics, useStudentsByNationality, useStudentsByProgram } from '../../../hooks/useAnalytics';
+import { useInstitutionMetrics, useStudentsByNationality, useStudentsByProgram, usePresenceTrends } from '../../../hooks/useAnalytics';
+import { AttendanceTrendChart } from '../AttendanceTrendChart';
 
 interface StatCardProps {
     label: string;
@@ -51,6 +52,7 @@ export function OverviewTab({ institutionId }: OverviewTabProps) {
     const { data: metrics, isLoading: metricsLoading } = useInstitutionMetrics(institutionId);
     const { data: nationalityData, isLoading: nationalityLoading } = useStudentsByNationality(institutionId);
     const { data: programData, isLoading: programLoading } = useStudentsByProgram(institutionId);
+    const { data: presenceData, isLoading: presenceLoading } = usePresenceTrends(institutionId);
 
     return (
         <Box>
@@ -165,20 +167,14 @@ export function OverviewTab({ institutionId }: OverviewTabProps) {
                             </Paper>
                         </Grid>
 
-                        {/* Monthly Arrivals */}
+                        {/* Attendance Trends */}
                         <Grid size={{ xs: 12 }}>
                             <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E2E8F0' }}>
-                                <Stack direction="row" justifyContent="space-between" mb={3}>
-                                    <Typography variant="subtitle1" fontWeight={700}>Monthly Arrivals</Typography>
-                                </Stack>
-                                <Box sx={{ height: 200, bgcolor: alpha('#3B82F6', 0.05), borderRadius: 2, display: 'grid', placeItems: 'center' }}>
-                                    <Typography color="text.secondary" variant="body2">Arrivals Trend Data (Live update pending seeding)</Typography>
-                                </Box>
-                                <Stack direction="row" spacing={4} justifyContent="center" mt={2}>
-                                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map(m => (
-                                        <Typography key={m} variant="caption" color="text.secondary">{m}</Typography>
-                                    ))}
-                                </Stack>
+                                <AttendanceTrendChart
+                                    data={presenceData || []}
+                                    isLoading={presenceLoading}
+                                    title="Daily Presence Rate (%)"
+                                />
                             </Paper>
                         </Grid>
                     </Grid>

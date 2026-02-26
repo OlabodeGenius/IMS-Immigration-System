@@ -1,4 +1,4 @@
-import { Paper, Typography, Box, Stack, alpha, CircularProgress } from '@mui/material';
+import { Paper, Typography, Box, Stack, alpha, Skeleton } from '@mui/material';
 import {
     GppBad as FraudIcon,
     EventBusy as OverdueIcon,
@@ -32,9 +32,28 @@ export function CriticalAlerts() {
             </Typography>
 
             {isLoading ? (
-                <Box display="flex" justifyContent="center" py={4}>
-                    <CircularProgress size={24} />
-                </Box>
+                <Stack spacing={2}>
+                    {[1, 2, 3].map((i) => (
+                        <Box
+                            key={i}
+                            sx={{
+                                p: 2,
+                                borderRadius: 3,
+                                border: '1px solid #E2E8F0',
+                                bgcolor: '#F8FAFC',
+                                display: 'flex',
+                                gap: 2
+                            }}
+                        >
+                            <Skeleton variant="circular" width={48} height={48} sx={{ flexShrink: 0 }} />
+                            <Box sx={{ flexGrow: 1 }}>
+                                <Skeleton variant="text" width="60%" height={24} sx={{ mb: 1 }} />
+                                <Skeleton variant="text" width="40%" height={16} />
+                                <Skeleton variant="text" width="70%" height={16} />
+                            </Box>
+                        </Box>
+                    ))}
+                </Stack>
             ) : alerts.length === 0 ? (
                 <Typography variant="body2" color="text.secondary" align="center" py={4}>
                     No critical alerts at this time.

@@ -42,8 +42,12 @@ export function useStudentCard(studentId: string) {
 export function useMintCardToken() {
     return useMutation({
         mutationFn: async (cardId: string) => {
+            const { data: { session } } = await supabase.auth.getSession();
             const { data, error } = await supabase.functions.invoke("mint-card-token", {
                 body: { card_id: cardId },
+                headers: {
+                    Authorization: `Bearer ${session?.access_token}`
+                }
             });
 
             if (error) throw error;

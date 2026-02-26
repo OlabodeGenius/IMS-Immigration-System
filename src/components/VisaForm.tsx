@@ -8,8 +8,8 @@ import {
     Box,
     Typography,
     Paper,
+    Button,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
 import { VisaSchema } from "../types/database.types";
 
 type VisaData = z.infer<typeof VisaSchema>;
@@ -142,14 +142,14 @@ export function VisaForm({ onSubmit, isLoading = false, defaultValues, isEditMod
                 </Grid>
 
                 <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-                    <LoadingButton
+                    <Button
                         type="submit"
                         variant="contained"
                         loading={isLoading}
                         size="large"
                     >
                         {isEditMode ? "Update Visa" : "Create Visa"}
-                    </LoadingButton>
+                    </Button>
                 </Box>
             </Box>
         </Paper>

@@ -29,6 +29,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useInstitution } from '../hooks/useInstitutions';
+import { NotificationBell } from './dashboard/NotificationBell';
 
 const drawerWidth = 260;
 
@@ -47,6 +48,7 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
     const [searchInput, setSearchInput] = React.useState("");
 
     const isImmigration = profile?.role === 'IMMIGRATION';
+    const isStudent = profile?.role === 'STUDENT';
 
     const menuItems = isImmigration ? [
         { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard?tab=overview' },
@@ -54,6 +56,12 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
         { text: 'Universities', icon: <BusinessIcon />, path: '/dashboard?tab=institutions' },
         { text: 'Reports', icon: <AssessmentIcon />, path: '/dashboard?tab=reports' },
         { text: 'Alerts', icon: <NotificationsIcon />, path: '/dashboard?tab=alerts' },
+        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+    ] : isStudent ? [
+        { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+        { text: 'Profile', icon: <PeopleIcon />, path: '/dashboard?tab=profile' },
+        { text: 'Visa Status', icon: <VerifyIcon />, path: '/dashboard?tab=visa' },
+        { text: 'Documents', icon: <AssessmentIcon />, path: '/dashboard?tab=documents' },
         { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
     ] : [
         { text: 'Overview', icon: <DashboardIcon />, path: '/dashboard' },
@@ -87,10 +95,11 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
                     '& .MuiDrawer-paper': {
                         width: drawerWidth,
                         boxSizing: 'border-box',
-                        borderRight: '1px solid #E2E8F0',
+                        borderRight: '1px solid #F1F5F9',
                         bgcolor: '#FFFFFF',
                         display: 'flex',
-                        flexDirection: 'column'
+                        flexDirection: 'column',
+                        boxShadow: '4px 0 24px -10px rgba(0,0,0,0.05)'
                     },
                 }}
             >
@@ -99,17 +108,17 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
                     <Box sx={{
                         width: 40,
                         height: 40,
-                        bgcolor: 'primary.main',
-                        borderRadius: 2,
+                        background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+                        borderRadius: 3,
                         display: 'grid',
                         placeItems: 'center',
                         mr: 1.5,
-                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
+                        boxShadow: '0 8px 16px -4px rgba(37, 99, 235, 0.4)'
                     }}>
-                        <Typography variant="h6" color="white" fontWeight={900}>IMS</Typography>
+                        <Typography variant="h6" color="white" fontWeight={900} sx={{ fontFamily: 'Outfit' }}>I</Typography>
                     </Box>
-                    <Typography variant="h6" fontWeight={800} color="#0F172A" letterSpacing="-0.5px">
-                        Oversight
+                    <Typography variant="h6" fontWeight={900} color="#1E293B" letterSpacing="-0.8px" sx={{ fontFamily: 'Outfit' }}>
+                        IMS Oversight
                     </Typography>
                 </Box>
 
@@ -183,7 +192,7 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
 
                 {/* Bottom Section */}
                 <Box sx={{ px: 2, pb: 4 }}>
-                    {!isImmigration && (
+                    {!isImmigration && !isStudent && (
                         <Button
                             fullWidth
                             variant="contained"
@@ -261,8 +270,9 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
                 {/* Professional Header */}
                 <Box sx={{
                     height: 80,
-                    bgcolor: 'white',
-                    borderBottom: '1px solid #E2E8F0',
+                    bgcolor: 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(12px)',
+                    borderBottom: '1px solid #F1F5F9',
                     px: 4,
                     display: 'flex',
                     alignItems: 'center',
@@ -278,16 +288,20 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
                             maxWidth: 500,
                             height: 48,
                             bgcolor: '#F1F5F9',
-                            borderRadius: '12px',
+                            borderRadius: '16px',
                             px: 2,
                             display: 'flex',
                             alignItems: 'center',
                             color: '#64748B',
                             border: '1px solid transparent',
-                            '&:focus-within': { border: '1px solid #3B82F6', bgcolor: 'white', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' },
-                            transition: 'all 0.2s'
+                            '&:focus-within': {
+                                border: '1px solid #3B82F6',
+                                bgcolor: 'white',
+                                boxShadow: '0 8px 16px -4px rgba(59, 130, 246, 0.1)'
+                            },
+                            transition: 'all 0.3s ease'
                         }}>
-                            <SearchIcon sx={{ fontSize: 22, mr: 1.5 }} />
+                            <SearchIcon sx={{ fontSize: 22, mr: 1.5, color: '#94A3B8' }} />
                             <input
                                 placeholder="Search by Passport, Visa ID, or Name..."
                                 value={searchInput}
@@ -298,9 +312,10 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
                                     background: 'transparent',
                                     outline: 'none',
                                     width: '100%',
-                                    fontSize: '0.9rem',
+                                    fontSize: '0.95rem',
                                     color: '#1E293B',
-                                    fontWeight: 500
+                                    fontWeight: 500,
+                                    fontFamily: 'Inter'
                                 }}
                             />
                             <Box sx={{
@@ -309,53 +324,64 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
                                 bgcolor: 'white',
                                 px: 1,
                                 py: 0.5,
-                                borderRadius: 1,
+                                borderRadius: 1.5,
                                 border: '1px solid #E2E8F0',
-                                gap: 0.5
+                                gap: 0.5,
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
                             }}>
                                 <CommandIcon sx={{ fontSize: 12 }} />
-                                <Typography variant="caption" fontWeight={700} sx={{ fontSize: 10 }}>K</Typography>
+                                <Typography variant="caption" fontWeight={800} sx={{ fontSize: 10 }}>K</Typography>
                             </Box>
                         </Box>
                     </Box>
 
                     {/* Right Profile Section */}
                     <Stack direction="row" spacing={3} alignItems="center" sx={{ ml: 4 }}>
-                        <NotificationsIcon sx={{ color: '#64748B', cursor: 'pointer' }} />
+                        <NotificationBell />
 
                         <Box sx={{ width: '1px', height: 32, bgcolor: '#E2E8F0' }} />
 
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Box sx={{ textAlign: 'right' }}>
-                                <Typography variant="subtitle2" fontWeight={800} color="#1E293B">
-                                    {title || (isImmigration ? "National Inspector" : "University Admin")}
+                                <Typography variant="subtitle2" fontWeight={800} color="#1E293B" sx={{ fontFamily: 'Outfit' }}>
+                                    {profile?.full_name || (isImmigration ? "National Inspector" : "University Admin")}
                                 </Typography>
-                                <Typography variant="caption" fontWeight={600} color="#64748B" display="block">
-                                    {isImmigration ? "National Oversight" : (institution?.name || "KIMEP University")}
+                                <Typography variant="caption" fontWeight={700} color="#64748B" display="block">
+                                    {isImmigration ? "National Oversight" : (institution?.name || "Institution Name")}
                                 </Typography>
                             </Box>
 
                             <Box sx={{
                                 width: 44,
                                 height: 44,
-                                borderRadius: '10px',
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)',
                                 display: 'grid',
                                 placeItems: 'center',
-                                border: `1.5px solid ${alpha(theme.palette.primary.main, 0.2)}`
+                                border: '1px solid #E2E8F0',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                                '&:hover': {
+                                    transform: 'scale(1.05)',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                                }
                             }}
                                 onClick={() => navigate('/settings')}
-                                style={{ cursor: 'pointer' }}
                             >
-                                <Typography variant="subtitle2" fontWeight={900} color="primary.main">
-                                    {getInitials(profile?.full_name || (isImmigration ? "National Inspector" : "University Admin"))}
+                                <Typography variant="subtitle2" fontWeight={900} color="primary.main" sx={{ fontFamily: 'Outfit' }}>
+                                    {getInitials(profile?.full_name || (isImmigration ? "NI" : "UA"))}
                                 </Typography>
                             </Box>
                         </Stack>
                     </Stack>
                 </Box>
 
-                <Box sx={{ p: 6, flexGrow: 1 }}>
+                <Box sx={{ p: 6, flexGrow: 1, overflowY: 'auto' }} className="fade-in">
+                    {title && (
+                        <Typography variant="h4" fontWeight={900} color="#1E293B" sx={{ mb: 4, fontFamily: 'Outfit', letterSpacing: '-0.5px' }}>
+                            {title}
+                        </Typography>
+                    )}
                     {children}
                 </Box>
             </Box>

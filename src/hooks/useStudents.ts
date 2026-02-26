@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabaseClient";
-import type { Student } from "../types/database.types";
+import type { Student } from "../types";
 
 // ===================================
 // Fetch Hooks
@@ -40,6 +40,28 @@ export function useStudent(id: string) {
             return data as Student;
         },
         enabled: !!id,
+    });
+}
+
+export function useMyStudentProfile() {
+    return useQuery({
+        queryKey: ["my_student_profile"],
+        queryFn: async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Not authenticated");
+
+            const { data, error } = await supabase
+                .from("students")
+                .select("*, visa:visas(*), institution:institutions(*), attendance:attendance_records(*)")
+                .eq("user_id", user.id)
+                .single();
+
+            if (error) {
+                if (error.code === 'PGRST116') return null; // Not found
+                throw error;
+            }
+            return data as any;
+        },
     });
 }
 
@@ -87,6 +109,29 @@ export function useCreateStudent() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["students"] });
+        },
+    });
+}
+
+export function useUpdateStudent() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, ...updates }: { id: string } & Partial<Student>) => {
+            const { data, error } = await supabase
+                .from("students")
+                .update(updates)
+                .eq("id", id)
+                .select()
+                .single();
+
+            if (error) throw error;
+            return data;
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["student", variables.id] });
+            queryClient.invalidateQueries({ queryKey: ["students"] });
+            queryClient.invalidateQueries({ queryKey: ["student_card"] });
         },
     });
 }

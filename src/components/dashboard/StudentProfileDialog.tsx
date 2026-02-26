@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -7,16 +8,15 @@ import {
     Grid,
     Typography,
     Box,
-    Divider,
     Stack,
     Chip,
-    Avatar,
     IconButton,
     CircularProgress,
     Paper,
     alpha,
     Alert,
-    AlertTitle
+    AlertTitle,
+    Skeleton
 } from '@mui/material';
 import {
     Close as CloseIcon,
@@ -30,10 +30,16 @@ import {
     CheckCircle as VerifiedIcon,
     Error as UnverifiedIcon
 } from '@mui/icons-material';
-import { useStudent } from '../../hooks/useStudents';
+import { useStudent, useUpdateStudent } from '../../hooks/useStudents';
 import { useAuth } from '../../auth/AuthProvider';
 import { useApproveStudent } from '../../hooks/useVerification';
-import type { Visa, AttendanceRecord } from '../../types/database.types';
+import { DocumentManager } from './DocumentManager';
+import { StudentPhotoUpload } from './StudentPhotoUpload';
+import { VisaRenewalWizard } from './immigration/VisaRenewalWizard';
+import type { Database } from '../../types/database.types';
+
+type Visa = Database['public']['Tables']['visas']['Row'];
+type AttendanceRecord = Database['public']['Tables']['attendance_records']['Row'];
 
 interface StudentProfileDialogProps {
     open: boolean;
@@ -44,7 +50,10 @@ interface StudentProfileDialogProps {
 export function StudentProfileDialog({ open, studentId, onClose }: StudentProfileDialogProps) {
     const { profile } = useAuth();
     const { data: student, isLoading } = useStudent(studentId || '');
+    const updateStudent = useUpdateStudent();
     const { mutate: approveStudent, isPending: isApproving } = useApproveStudent();
+
+    const [isRenewalOpen, setIsRenewalOpen] = useState(false);
 
     if (!studentId) return null;
 
@@ -84,7 +93,60 @@ export function StudentProfileDialog({ open, studentId, onClose }: StudentProfil
             </DialogTitle>
             <DialogContent dividers sx={{ bgcolor: '#F8FAFC' }}>
                 {isLoading ? (
-                    <Box display="flex" justifyContent="center" py={10}><CircularProgress /></Box>
+                    <Box>
+                        {/* Header Area Skeleton */}
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 4, mb: 3, border: '1px solid #E2E8F0' }}>
+                            <Stack direction="row" spacing={3} alignItems="center">
+                                <Skeleton variant="circular" width={80} height={80} />
+                                <Box sx={{ flexGrow: 1 }}>
+                                    <Skeleton variant="text" width="40%" height={40} sx={{ mb: 1 }} />
+                                    <Skeleton variant="text" width="20%" height={24} sx={{ mb: 2 }} />
+                                    <Stack direction="row" spacing={1}>
+                                        <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 1 }} />
+                                        <Skeleton variant="rectangular" width={100} height={24} sx={{ borderRadius: 1 }} />
+                                    </Stack>
+                                </Box>
+                            </Stack>
+                        </Paper>
+
+                        <Grid container spacing={3}>
+                            {/* Personal Details Skeleton */}
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid #E2E8F0' }}>
+                                    <Skeleton variant="text" width="50%" height={20} sx={{ mb: 3 }} />
+                                    <Stack spacing={2.5}>
+                                        {[1, 2, 3, 4].map((i) => (
+                                            <Stack key={i} direction="row" spacing={2} alignItems="center">
+                                                <Skeleton variant="circular" width={24} height={24} />
+                                                <Box sx={{ flexGrow: 1 }}>
+                                                    <Skeleton variant="text" width="30%" height={16} />
+                                                    <Skeleton variant="text" width="60%" height={24} />
+                                                </Box>
+                                            </Stack>
+                                        ))}
+                                    </Stack>
+                                </Paper>
+                            </Grid>
+
+                            {/* Visa Details Skeleton */}
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid #E2E8F0', height: '100%' }}>
+                                    <Skeleton variant="text" width="50%" height={20} sx={{ mb: 3 }} />
+                                    <Stack spacing={2.5}>
+                                        {[1, 2, 3, 4].map((i) => (
+                                            <Stack key={i} direction="row" spacing={2} alignItems="center">
+                                                <Skeleton variant="circular" width={24} height={24} />
+                                                <Box sx={{ flexGrow: 1 }}>
+                                                    <Skeleton variant="text" width="30%" height={16} />
+                                                    <Skeleton variant="text" width="60%" height={24} />
+                                                </Box>
+                                            </Stack>
+                                        ))}
+                                    </Stack>
+                                </Paper>
+                            </Grid>
+                        </Grid>
+                    </Box>
                 ) : student ? (
                     <Box>
                         {/* Status Alert for Immigration */}
@@ -98,9 +160,15 @@ export function StudentProfileDialog({ open, studentId, onClose }: StudentProfil
                         {/* Header Area */}
                         <Paper elevation={0} sx={{ p: 3, borderRadius: 4, mb: 3, border: '1px solid #E2E8F0' }}>
                             <Stack direction="row" spacing={3} alignItems="center">
-                                <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main', fontSize: 32, boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' }}>
-                                    {student.full_name?.charAt(0) || 'S'}
-                                </Avatar>
+                                <StudentPhotoUpload
+                                    value={student.photo_url || null}
+                                    studentId={studentId || undefined}
+                                    onChange={(newPhotoUrl: string | null) => {
+                                        if (studentId) {
+                                            updateStudent.mutate({ id: studentId, photo_url: newPhotoUrl });
+                                        }
+                                    }}
+                                />
                                 <Box>
                                     <Typography variant="h5" fontWeight={900} color="#1E293B">{student.full_name}</Typography>
                                     <Typography variant="body2" color="text.secondary" fontWeight={600}>ID: {student.student_id_number}</Typography>
@@ -140,7 +208,15 @@ export function StudentProfileDialog({ open, studentId, onClose }: StudentProfil
                             {/* Visa Details */}
                             <Grid size={{ xs: 12, md: 6 }}>
                                 <Paper elevation={0} sx={{ p: 3, borderRadius: 4, height: '100%', border: '1px solid #E2E8F0' }}>
-                                    <Typography variant="subtitle2" fontWeight={800} color="primary" gutterBottom sx={{ letterSpacing: 0.5 }}>VISA & ENROLLMENT</Typography>
+                                    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                                        <Typography variant="subtitle2" fontWeight={800} color="primary" sx={{ letterSpacing: 0.5 }}>VISA & ENROLLMENT</Typography>
+
+                                        {!isImmigration && verificationStatus === 'VERIFIED' && (
+                                            <Button variant="outlined" size="small" sx={{ fontWeight: 700, borderRadius: 2 }} onClick={() => setIsRenewalOpen(true)}>
+                                                Apply for Renewal
+                                            </Button>
+                                        )}
+                                    </Stack>
                                     <Stack spacing={2.5} mt={2}>
                                         <DetailItem icon={<VisaIcon fontSize="small" />} label="Visa Type" value={visa?.visa_type || 'N/A'} />
                                         <DetailItem icon={<BadgeIcon fontSize="small" />} label="Visa Number" value={visa?.visa_number || 'N/A'} />
@@ -178,6 +254,13 @@ export function StudentProfileDialog({ open, studentId, onClose }: StudentProfil
                                     ) : (
                                         <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>No attendance records found.</Typography>
                                     )}
+                                </Paper>
+                            </Grid>
+
+                            {/* Document Management */}
+                            <Grid size={{ xs: 12 }}>
+                                <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid #E2E8F0' }}>
+                                    <DocumentManager studentId={studentId} />
                                 </Paper>
                             </Grid>
                         </Grid>
@@ -224,6 +307,11 @@ export function StudentProfileDialog({ open, studentId, onClose }: StudentProfil
                     </Button>
                 </Stack>
             </DialogActions>
+            <VisaRenewalWizard
+                open={isRenewalOpen}
+                studentId={studentId}
+                onClose={() => setIsRenewalOpen(false)}
+            />
         </Dialog>
     );
 }

@@ -1,33 +1,32 @@
-import { Box, Dialog, DialogContent, IconButton, Button, Stack, Typography } from "@mui/material";
+import { Box, Dialog, DialogContent, IconButton, Button, Typography } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 import kzLogo from "../assets/kz-logo.png";
 import kbtuLogoDefault from "../assets/kbtu-logo.png";
 import kimepLogoDefault from "../assets/kimep-logo.png";
+import kaznuLogo from "../assets/kaznu-logo.png";
+import nuLogo from "../assets/nu-logo.png";
 import schoolPlaceholder from "../assets/school-placeholder.png";
+import kzMapBackground from "../assets/kazakhstan_map.png";
+import officialCrest from "../assets/official_crest.png";
 
 export interface StudentCardData {
-    // Student Info
-    id: string; // The card internal ID or card number
+    id: string;
+    schoolId: string;
+    iin: string;
     fullName: string;
     dateOfBirth: string;
     sex: string;
     nationality: string;
     photo?: string | null;
-
-    // School Info
     schoolName: string;
     schoolAddress: string;
     schoolLogo?: string | null;
-
-    // Additional Info
     dateOfIssue: string;
     dateOfExpiry: string;
     phoneNumber: string;
     cityRegion: string;
-
-    // QR Code Data
     qrData?: string;
 }
 
@@ -39,19 +38,506 @@ interface DigitalStudentCardProps {
 
 const getSchoolLogo = (name: string, logoUrl?: string | null) => {
     if (logoUrl) return logoUrl;
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes("kbtu") || lowerName.includes("kazakh-british")) return kbtuLogoDefault;
-    if (lowerName.includes("kimep")) return kimepLogoDefault;
+    const n = name.toLowerCase();
+    if (n.includes("kbtu") || n.includes("kazakh-british")) return kbtuLogoDefault;
+    if (n.includes("kimep")) return kimepLogoDefault;
+    if (n.includes("kaznu") || n.includes("al-farabi")) return kaznuLogo;
+    if (n.includes("nazarbayev") || n.includes("nu ")) return nuLogo;
     return schoolPlaceholder;
 };
 
-const getWatermarkText = (name: string) => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes("kbtu") || lowerName.includes("kazakh-british")) return "KBTU";
-    if (lowerName.includes("kimep")) return "KIMEP";
-    return "STUDENT";
-};
+// ─── CARD FRONT ──────────────────────────────────────────────────────────────
+// White card. KZ Map watermark covers whole card (cyan). Sun/eagle crest on right (golden).
+// Top row: KZ flag | title | school logo. Below: vertical date label + photo + barcode | data fields.
+export function StudentCardFront({ student }: { student: StudentCardData }) {
+    const schoolLogo = getSchoolLogo(student.schoolName, student.schoolLogo);
 
+    return (
+        <Box
+            id="student-card-front"
+            sx={{
+                width: 656,
+                height: 440,
+                bgcolor: "#ffffff",
+                borderRadius: "16px",
+                overflow: "hidden",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+                position: "relative",
+                fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif",
+                border: "1px solid #e5e7eb",
+                display: "flex",
+                flexDirection: "column",
+            }}
+        >
+            {/* ── Watermark 1: Kazakhstan map (cyan tint, covers whole card) */}
+            <Box
+                component="img"
+                src={kzMapBackground}
+                sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    opacity: 0.12,
+                    filter: "hue-rotate(170deg) saturate(1.6) brightness(0.9)",
+                    pointerEvents: "none",
+                    zIndex: 0,
+                }}
+            />
+
+            {/* ── Watermark 2: Official sun/eagle crest (golden, right half only) */}
+            <Box
+                component="img"
+                src={officialCrest}
+                sx={{
+                    position: "absolute",
+                    top: "48%",
+                    right: "-6%",
+                    transform: "translateY(-50%)",
+                    width: "54%",
+                    height: "90%",
+                    objectFit: "contain",
+                    opacity: 0.18,
+                    filter: "sepia(1) saturate(5) hue-rotate(8deg) brightness(1.5)",
+                    pointerEvents: "none",
+                    zIndex: 0,
+                }}
+            />
+
+            {/* ── Header Row: KZ flag | Title | School logo ──────────────────── */}
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    px: "28px",
+                    pt: "20px",
+                    pb: "14px",
+                    gap: "16px",
+                    position: "relative",
+                    zIndex: 1,
+                    flexShrink: 0,
+                }}
+            >
+                {/* Kazakhstan flag */}
+                <Box
+                    component="img"
+                    src={kzLogo}
+                    alt="Kazakhstan"
+                    sx={{ width: 72, height: "auto", objectFit: "contain", flexShrink: 0 }}
+                />
+
+                {/* Title */}
+                <Box sx={{ flex: 1, textAlign: "center" }}>
+                    <Typography
+                        sx={{
+                            fontSize: "24px",
+                            fontWeight: 800,
+                            color: "#1a1a2e",
+                            lineHeight: 1.15,
+                            letterSpacing: "0.5px",
+                            textTransform: "uppercase",
+                        }}
+                    >
+                        Kazakhstan International<br />Student Digital ID
+                    </Typography>
+                </Box>
+
+                {/* School logo + abbreviation */}
+                <Box
+                    sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        flexShrink: 0,
+                        minWidth: 72,
+                    }}
+                >
+                    <Box
+                        component="img"
+                        src={schoolLogo}
+                        alt={student.schoolName}
+                        sx={{ width: 52, height: 52, objectFit: "contain" }}
+                    />
+                    <Typography
+                        sx={{
+                            fontSize: "16px",
+                            fontWeight: 900,
+                            color: "#1a3a6b",
+                            mt: "2px",
+                            letterSpacing: "1px",
+                        }}
+                    >
+                        {student.schoolName.toLowerCase().includes("kbtu") ||
+                            student.schoolName.toLowerCase().includes("kazakh-british")
+                            ? "KBTU"
+                            : ""}
+                    </Typography>
+                </Box>
+            </Box>
+
+            {/* ── Body Row ────────────────────────────────────────────────────── */}
+            <Box
+                sx={{
+                    display: "flex",
+                    flex: 1,
+                    position: "relative",
+                    zIndex: 1,
+                    pb: "12px",
+                }}
+            >
+                {/* Left edge: Rotated "Printed Date" */}
+                <Box
+                    sx={{
+                        width: "28px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        ml: "4px",
+                    }}
+                >
+                    <Typography
+                        sx={{
+                            fontSize: "10px",
+                            color: "#6b7280",
+                            fontWeight: 500,
+                            whiteSpace: "nowrap",
+                            transform: "rotate(-90deg)",
+                            letterSpacing: "0.3px",
+                        }}
+                    >
+                        Printed Date: {new Date().toLocaleDateString("en-GB")}
+                    </Typography>
+                </Box>
+
+                {/* Photo + barcode */}
+                <Box
+                    sx={{
+                        width: "190px",
+                        display: "flex",
+                        flexDirection: "column",
+                        pr: "14px",
+                        flexShrink: 0,
+                    }}
+                >
+                    {/* Passport photo */}
+                    <Box
+                        component="img"
+                        src={student.photo || "https://placehold.co/400x500/e5e7eb/9ca3af?text=PHOTO"}
+                        alt="Student Photo"
+                        sx={{
+                            width: "100%",
+                            flex: 1,
+                            objectFit: "cover",
+                            objectPosition: "top",
+                            display: "block",
+                            minHeight: 0,
+                        }}
+                    />
+
+                    {/* Barcode */}
+                    <Box
+                        sx={{
+                            mt: "8px",
+                            width: "100%",
+                            height: "44px",
+                            backgroundImage:
+                                "repeating-linear-gradient(90deg," +
+                                "#000 0,#000 1px,transparent 1px,transparent 2px," +
+                                "#000 2px,#000 4px,transparent 4px,transparent 5px," +
+                                "#000 5px,#000 7px,transparent 7px,transparent 9px," +
+                                "#000 9px,#000 10px,transparent 10px,transparent 12px," +
+                                "#000 12px,#000 15px,transparent 15px,transparent 17px)",
+                            flexShrink: 0,
+                        }}
+                    />
+
+                    {/* Barcode number */}
+                    <Typography
+                        sx={{
+                            textAlign: "center",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            fontFamily: "monospace",
+                            color: "#111827",
+                            mt: "3px",
+                            letterSpacing: "1.5px",
+                        }}
+                    >
+                        {student.schoolId || student.id.slice(0, 9).toUpperCase()}
+                    </Typography>
+                </Box>
+
+                {/* Data fields */}
+                <Box
+                    sx={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        gap: "16px",
+                        pr: "28px",
+                        pl: "4px",
+                    }}
+                >
+                    {[
+                        { label: "First, Middle, Surname", value: student.fullName, valueFontSize: "20px" },
+                        { label: "Date of Birth", value: student.dateOfBirth, valueFontSize: "20px" },
+                        { label: "Sex", value: student.sex, valueFontSize: "20px" },
+                        { label: "Country of Citizenship", value: student.nationality, valueFontSize: "20px" },
+                        { label: "School Name", value: student.schoolName, valueFontSize: "18px" },
+                    ].map(({ label, value, valueFontSize }) => (
+                        <Box key={label}>
+                            <Typography
+                                sx={{
+                                    fontSize: "12px",
+                                    color: "#6b7280",
+                                    fontWeight: 400,
+                                    lineHeight: 1,
+                                    mb: "3px",
+                                }}
+                            >
+                                {label}
+                            </Typography>
+                            <Typography
+                                sx={{
+                                    fontSize: valueFontSize,
+                                    fontWeight: 700,
+                                    color: "#111827",
+                                    lineHeight: 1.2,
+                                }}
+                            >
+                                {value || "—"}
+                            </Typography>
+                        </Box>
+                    ))}
+                </Box>
+            </Box>
+        </Box>
+    );
+}
+
+// ─── CARD BACK ───────────────────────────────────────────────────────────────
+// White card. NO header. Official crest watermark = large, brownish-visible, left side.
+// Left: data fields + IIN box. Right: large QR code. Bottom: footer text bar.
+function StudentCardBack({
+    student,
+    qrCodeUrl,
+}: {
+    student: StudentCardData;
+    qrCodeUrl: string;
+}) {
+    return (
+        <Box
+            id="student-card-back"
+            sx={{
+                width: 656,
+                height: 440,
+                bgcolor: "#ffffff",
+                borderRadius: "16px",
+                overflow: "hidden",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+                position: "relative",
+                fontFamily: "'Inter','Helvetica Neue',Arial,sans-serif",
+                border: "1px solid #e5e7eb",
+                display: "flex",
+                flexDirection: "column",
+            }}
+        >
+            {/* ── Watermark: Official crest, large brownish, LEFT side */}
+            <Box
+                component="img"
+                src={officialCrest}
+                sx={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "-4%",
+                    transform: "translateY(-50%)",
+                    width: "55%",
+                    height: "100%",
+                    objectFit: "contain",
+                    objectPosition: "left center",
+                    opacity: 0.28,
+                    // The golden-brownish tint visible in back image reference
+                    filter: "sepia(0.9) saturate(2) brightness(1.05)",
+                    pointerEvents: "none",
+                    zIndex: 0,
+                }}
+            />
+
+            {/* ── Body ─────────────────────────────────────────────────────── */}
+            <Box
+                sx={{
+                    display: "flex",
+                    flex: 1,
+                    position: "relative",
+                    zIndex: 1,
+                    pt: "28px",
+                    pb: "0px",
+                }}
+            >
+                {/* Left column: data fields + IIN box */}
+                <Box
+                    sx={{
+                        flex: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        pl: "36px",
+                        pr: "24px",
+                        justifyContent: "space-between",
+                        pb: "16px",
+                    }}
+                >
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                        {[
+                            { label: "Date of Issue", value: student.dateOfIssue },
+                            { label: "Date of Expiry", value: student.dateOfExpiry },
+                            { label: "Phone Number", value: student.phoneNumber },
+                            { label: "City/Region", value: student.cityRegion },
+                            { label: "School Address", value: student.schoolAddress },
+                        ].map(({ label, value }) => (
+                            <Box key={label}>
+                                <Typography
+                                    sx={{
+                                        fontSize: "13px",
+                                        color: "#6b7280",
+                                        fontWeight: 400,
+                                        lineHeight: 1,
+                                        mb: "3px",
+                                    }}
+                                >
+                                    {label}
+                                </Typography>
+                                <Typography
+                                    sx={{
+                                        fontSize: "22px",
+                                        fontWeight: 800,
+                                        color: "#111827",
+                                        lineHeight: 1.2,
+                                        letterSpacing: "-0.3px",
+                                    }}
+                                >
+                                    {value || "—"}
+                                </Typography>
+                            </Box>
+                        ))}
+                    </Box>
+
+                    {/* IIN box */}
+                    <Box
+                        sx={{
+                            bgcolor: "#e5e7eb",
+                            borderRadius: "8px",
+                            px: "20px",
+                            py: "12px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            mt: "16px",
+                            alignSelf: "flex-start",
+                            minWidth: "260px",
+                        }}
+                    >
+                        <Typography
+                            sx={{
+                                fontSize: "20px",
+                                fontWeight: 900,
+                                color: "#374151",
+                                letterSpacing: "4px",
+                                fontFamily: "monospace",
+                            }}
+                        >
+                            IIN
+                        </Typography>
+                        <Typography
+                            sx={{
+                                fontSize: "24px",
+                                fontWeight: 900,
+                                fontFamily: "monospace",
+                                color: "#111827",
+                                letterSpacing: "4px",
+                            }}
+                        >
+                            {student.iin || "—"}
+                        </Typography>
+                    </Box>
+                </Box>
+
+                {/* Right column: QR code */}
+                <Box
+                    sx={{
+                        width: "280px",
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        pt: "8px",
+                        pr: "28px",
+                    }}
+                >
+                    {qrCodeUrl ? (
+                        <Box
+                            component="img"
+                            src={qrCodeUrl}
+                            alt="QR Code"
+                            sx={{
+                                width: "240px",
+                                height: "240px",
+                                imageRendering: "pixelated",
+                                border: "2px solid #d1d5db",
+                            }}
+                        />
+                    ) : (
+                        <Box
+                            sx={{
+                                width: "240px",
+                                height: "240px",
+                                bgcolor: "#f3f4f6",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                border: "1px solid #e5e7eb",
+                            }}
+                        >
+                            <Typography sx={{ fontSize: "11px", color: "#9ca3af" }}>
+                                Loading QR…
+                            </Typography>
+                        </Box>
+                    )}
+                </Box>
+            </Box>
+
+            {/* ── Footer ───────────────────────────────────────────────────── */}
+            <Box
+                sx={{
+                    py: "8px",
+                    px: "28px",
+                    textAlign: "center",
+                    borderTop: "1px solid #f3f4f6",
+                    flexShrink: 0,
+                    zIndex: 1,
+                    position: "relative",
+                }}
+            >
+                <Typography
+                    sx={{
+                        fontSize: "10px",
+                        color: "#6b7280",
+                        fontWeight: 400,
+                        lineHeight: 1.4,
+                    }}
+                >
+                    if you find this card, please return to the issuing organization (vmp.gov.kz) or to the nearest police station
+                </Typography>
+            </Box>
+        </Box>
+    );
+}
+
+// ─── Dialog wrapper ───────────────────────────────────────────────────────────
 export default function DigitalStudentCard({ open, onClose, student }: DigitalStudentCardProps) {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
 
@@ -59,401 +545,92 @@ export default function DigitalStudentCard({ open, onClose, student }: DigitalSt
         if (student.qrData || student.id) {
             const dataToEncode = student.qrData || `CARD-${student.id}`;
             QRCode.toDataURL(dataToEncode, {
-                width: 300,
+                width: 480,
                 margin: 1,
                 errorCorrectionLevel: "H",
+                color: { dark: "#000000", light: "#ffffff" },
             })
                 .then(setQrCodeUrl)
                 .catch(console.error);
         }
     }, [student.qrData, student.id]);
 
-    const schoolLogo = getSchoolLogo(student.schoolName, student.schoolLogo);
-    const watermark = getWatermarkText(student.schoolName);
-
     return (
         <Dialog
             open={open}
             onClose={onClose}
-            maxWidth="lg"
+            maxWidth={false}
             PaperProps={{
                 sx: {
-                    borderRadius: 4,
-                    maxWidth: 1200,
-                    boxShadow: 'none',
-                    bgcolor: 'transparent'
+                    borderRadius: 3,
+                    boxShadow: "none",
+                    bgcolor: "transparent",
+                    overflow: "visible",
                 },
             }}
         >
-            <Box sx={{ position: "relative", bgcolor: "transparent" }}>
-                {/* Close Button */}
+            <Box sx={{ position: "relative" }}>
+                {/* Close button */}
                 <IconButton
                     onClick={onClose}
                     sx={{
                         position: "absolute",
-                        right: 16,
-                        top: 16,
+                        right: -14,
+                        top: -14,
                         zIndex: 10,
                         bgcolor: "white",
-                        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-                        "&:hover": {
-                            bgcolor: "grey.100",
-                        },
+                        boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
+                        "&:hover": { bgcolor: "#f9fafb" },
                     }}
                 >
                     <CloseIcon />
                 </IconButton>
 
                 <DialogContent sx={{ p: 0, overflow: "visible" }}>
+                    {/* Cards side-by-side on a dark backdrop */}
                     <Box
                         sx={{
                             display: "flex",
                             flexDirection: { xs: "column", md: "row" },
-                            gap: 4,
-                            p: 6,
-                            bgcolor: "#F1F5F9",
-                            borderRadius: 4,
-                            minHeight: 600,
-                            alignItems: 'center',
-                            justifyContent: 'center'
+                            gap: "32px",
+                            p: "48px",
+                            bgcolor: "#1c1c1e",
+                            borderRadius: "16px",
+                            alignItems: "center",
+                            justifyContent: "center",
                         }}
                     >
-                        {/* Front Side of Card */}
-                        <Box
-                            sx={{
-                                width: 500,
-                                height: 315, // Maintain aspect ratio roughly
-                                bgcolor: "white",
-                                borderRadius: 3,
-                                overflow: "hidden",
-                                boxShadow: "0 20px 50px rgba(0,0,0,0.12)",
-                                position: "relative",
-                                flexShrink: 0,
-                            }}
-                        >
-                            {/* Watermark */}
-                            <Typography
-                                sx={{
-                                    position: "absolute",
-                                    top: "50%",
-                                    left: "50%",
-                                    transform: "translate(-50%, -50%)",
-                                    opacity: 0.04,
-                                    fontSize: "80px",
-                                    fontWeight: 900,
-                                    color: "#2563eb",
-                                    pointerEvents: "none",
-                                    whiteSpace: "nowrap",
-                                    zIndex: 0
-                                }}
-                            >
-                                {watermark}
-                            </Typography>
-
-                            {/* Card Header */}
-                            <Box
-                                sx={{
-                                    bgcolor: "#ffffff",
-                                    p: 2,
-                                    borderBottom: "1px solid #f1f5f9",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-between",
-                                    position: 'relative',
-                                    zIndex: 1
-                                }}
-                            >
-                                {/* Kazakhstan Flag */}
-                                <Box
-                                    sx={{
-                                        width: 70,
-                                        height: 44,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                    }}
-                                >
-                                    <Box
-                                        component="img"
-                                        src={kzLogo}
-                                        alt="Kazakhstan Flag"
-                                        sx={{ width: "100%", height: "100%", objectFit: 'contain' }}
-                                    />
-                                </Box>
-
-                                {/* Title */}
-                                <Box sx={{ flex: 1, textAlign: "center", px: 2 }}>
-                                    <Typography sx={{ fontSize: "11px", fontWeight: 800, color: "#1e293b", lineHeight: 1.1 }}>
-                                        KAZAKHSTAN INTERNATIONAL<br />STUDENT DIGITAL ID
-                                    </Typography>
-                                </Box>
-
-                                {/* School Logo */}
-                                <Box
-                                    sx={{
-                                        width: 70,
-                                        height: 44,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                    }}
-                                >
-                                    <Box
-                                        component="img"
-                                        src={schoolLogo}
-                                        alt="School Logo"
-                                        sx={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-                                    />
-                                </Box>
-                            </Box>
-
-                            {/* Card Body */}
-                            <Box sx={{ display: "flex", p: 2.5, gap: 2.5, position: 'relative', zIndex: 1 }}>
-                                {/* Left Side - Photo */}
-                                <Box sx={{ flexShrink: 0 }}>
-                                    <Box
-                                        sx={{
-                                            width: 130,
-                                            height: 160,
-                                            bgcolor: "#f8fafc",
-                                            borderRadius: 1.5,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            overflow: "hidden",
-                                            position: "relative",
-                                            border: "1px solid #e2e8f0"
-                                        }}
-                                    >
-                                        <Box
-                                            component="img"
-                                            src={student.photo || "https://placehold.co/400x500?text=PHOTO"}
-                                            alt="Student"
-                                            sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                        />
-
-                                        {/* Printed Date Label */}
-                                        <Box
-                                            sx={{
-                                                position: "absolute",
-                                                left: 0,
-                                                bottom: 0,
-                                                bgcolor: "rgba(15, 23, 42, 0.8)",
-                                                color: "white",
-                                                fontSize: 7,
-                                                px: 0.5,
-                                                py: 0.2,
-                                                transform: "rotate(-90deg)",
-                                                transformOrigin: "bottom left",
-                                                whiteSpace: "nowrap",
-                                                fontWeight: 600
-                                            }}
-                                        >
-                                            Printed since: {new Date().toLocaleDateString()}
-                                        </Box>
-                                    </Box>
-
-                                    {/* Barcode */}
-                                    <Box
-                                        sx={{
-                                            mt: 1.5,
-                                            height: 34,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            border: "1px solid #e2e8f0",
-                                            borderRadius: 0.5,
-                                            overflow: 'hidden'
-                                        }}
-                                    >
-                                        <Box
-                                            sx={{
-                                                background: "repeating-linear-gradient(90deg, #000 0px, #000 1px, #fff 1px, #fff 3px)",
-                                                width: "100%",
-                                                height: 24,
-                                                opacity: 0.8
-                                            }}
-                                        />
-                                    </Box>
-                                    <Typography sx={{ fontSize: 9, textAlign: "center", mt: 0.5, fontFamily: "monospace", opacity: 0.6 }}>
-                                        {student.id.replace(/[^0-9]/g, "").slice(0, 10)}
-                                    </Typography>
-                                </Box>
-
-                                {/* Right Side - Info */}
-                                <Box sx={{ flex: 1 }}>
-                                    <Stack spacing={1.2}>
-                                        <Box>
-                                            <Typography sx={{ fontSize: 9, color: "#64748b", fontWeight: 600, mb: 0.2 }}>
-                                                First, Middle, Surname
-                                            </Typography>
-                                            <Typography sx={{ fontSize: 13, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>
-                                                {student.fullName}
-                                            </Typography>
-                                        </Box>
-
-                                        <Box sx={{ display: 'flex', gap: 2 }}>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography sx={{ fontSize: 9, color: "#64748b", fontWeight: 600, mb: 0.2 }}>Date of Birth</Typography>
-                                                <Typography sx={{ fontSize: 11, fontWeight: 700 }}>{student.dateOfBirth}</Typography>
-                                            </Box>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography sx={{ fontSize: 9, color: "#64748b", fontWeight: 600, mb: 0.2 }}>Sex</Typography>
-                                                <Typography sx={{ fontSize: 11, fontWeight: 700 }}>{student.sex}</Typography>
-                                            </Box>
-                                        </Box>
-
-                                        <Box>
-                                            <Typography sx={{ fontSize: 9, color: "#64748b", fontWeight: 600, mb: 0.2 }}>
-                                                Country of Citizenship
-                                            </Typography>
-                                            <Typography sx={{ fontSize: 11, fontWeight: 700 }}>{student.nationality}</Typography>
-                                        </Box>
-
-                                        <Box>
-                                            <Typography sx={{ fontSize: 9, color: "#64748b", fontWeight: 600, mb: 0.2 }}>School Name</Typography>
-                                            <Typography sx={{ fontSize: 10, fontWeight: 700, lineHeight: 1.2, color: '#1e293b' }}>
-                                                {student.schoolName}
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
-
-                                    {/* ID Number at Bottom */}
-                                    <Box
-                                        sx={{
-                                            mt: 1.5,
-                                            pt: 1,
-                                            borderTop: "1px solid #f1f5f9",
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 1
-                                        }}
-                                    >
-                                        <Typography sx={{ fontSize: 9, color: "#64748b", fontWeight: 700 }}>ID:</Typography>
-                                        <Typography sx={{ fontSize: 11, fontWeight: 800, fontFamily: "monospace", letterSpacing: 0.5 }}>
-                                            {student.id}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </Box>
-
-                            {/* Footer Note */}
-                            <Typography
-                                sx={{
-                                    position: "absolute",
-                                    bottom: 8,
-                                    left: 0,
-                                    right: 0,
-                                    textAlign: "center",
-                                    fontSize: 7,
-                                    color: "#94a3b8",
-                                    px: 2,
-                                    fontWeight: 500
-                                }}
-                            >
-                                This card is an official digital student identification issued by the state of Kazakhstan.
-                            </Typography>
-                        </Box>
-
-                        {/* Back Side of Card */}
-                        <Box
-                            sx={{
-                                width: 500,
-                                height: 315,
-                                bgcolor: "white",
-                                borderRadius: 3,
-                                overflow: "hidden",
-                                boxShadow: "0 20px 50px rgba(0,0,0,0.12)",
-                                position: "relative",
-                                flexShrink: 0,
-                            }}
-                        >
-                            <Box sx={{ p: 4, height: "100%", display: "flex" }}>
-                                {/* Additional Information Section */}
-                                <Box sx={{ flex: 1.2, display: "flex", flexDirection: "column" }}>
-                                    <Typography sx={{ fontWeight: 800, fontSize: 14, mb: 3, color: '#0f172a' }}>
-                                        ADDITIONAL INFO
-                                    </Typography>
-
-                                    <Stack spacing={2}>
-                                        <Box sx={{ display: 'flex', gap: 2 }}>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography sx={{ fontSize: 9, color: "#64748b", fontWeight: 600, mb: 0.5 }}>Date of Issue</Typography>
-                                                <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{student.dateOfIssue}</Typography>
-                                            </Box>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography sx={{ fontSize: 9, color: "#64748b", fontWeight: 600, mb: 0.5 }}>Date of Expiry</Typography>
-                                                <Typography sx={{ fontSize: 13, fontWeight: 700, color: "error.main" }}>
-                                                    {student.dateOfExpiry}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-
-                                        <Box>
-                                            <Typography sx={{ fontSize: 9, color: "#64748b", fontWeight: 600, mb: 0.5 }}>Phone Number</Typography>
-                                            <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{student.phoneNumber}</Typography>
-                                        </Box>
-
-                                        <Box>
-                                            <Typography sx={{ fontSize: 9, color: "#64748b", fontWeight: 600, mb: 0.5 }}>City/Region</Typography>
-                                            <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{student.cityRegion}</Typography>
-                                        </Box>
-
-                                        <Box>
-                                            <Typography sx={{ fontSize: 9, color: "#64748b", fontWeight: 600, mb: 0.5 }}>School Address</Typography>
-                                            <Typography sx={{ fontSize: 10, fontWeight: 700, lineHeight: 1.3 }}>
-                                                {student.schoolAddress}
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
-
-                                    <Box sx={{ mt: 'auto' }}>
-                                        <Typography
-                                            sx={{
-                                                fontSize: 7,
-                                                color: "#94a3b8",
-                                                lineHeight: 1.4,
-                                                fontWeight: 500
-                                            }}
-                                        >
-                                            If you find this card, please return to the issuing organization (vmp.gov.kz) or to the nearest police station.
-                                        </Typography>
-                                    </Box>
-                                </Box>
-
-                                {/* QR Code Section */}
-                                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: '#f8fafc', borderRadius: 2, ml: 2 }}>
-                                    {qrCodeUrl && (
-                                        <Box
-                                            component="img"
-                                            src={qrCodeUrl}
-                                            alt="QR Code"
-                                            sx={{
-                                                width: 130,
-                                                height: 130,
-                                                border: "1px solid #e2e8f0",
-                                                borderRadius: 2,
-                                                p: 1.5,
-                                                bgcolor: "white",
-                                                boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                                            }}
-                                        />
-                                    )}
-                                    <Typography sx={{ mt: 2, fontSize: 11, fontWeight: 800, color: "#1e293b" }}>
-                                        SCAN TO VERIFY
-                                    </Typography>
-                                    <Typography sx={{ fontSize: 8, color: "#94a3b8", mt: 0.5, fontWeight: 600 }}>
-                                        IMS Blockchain Verified
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        </Box>
+                        <StudentCardFront student={student} />
+                        <StudentCardBack student={student} qrCodeUrl={qrCodeUrl} />
                     </Box>
 
-                    {/* Bottom Actions */}
-                    <Box sx={{ p: 3, textAlign: "center", bgcolor: "#f1f5f9", display: 'flex', justifyContent: 'center', gap: 2 }}>
-                        <Button variant="contained" size="large" onClick={onClose} sx={{ px: 8, borderRadius: 2 }}>
-                            CLOSE
+                    {/* Action bar */}
+                    <Box
+                        sx={{
+                            p: "16px",
+                            textAlign: "center",
+                            bgcolor: "#1c1c1e",
+                            borderTop: "1px solid #333",
+                            borderRadius: "0 0 16px 16px",
+                            display: "flex",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <Button
+                            variant="outlined"
+                            size="large"
+                            onClick={onClose}
+                            sx={{
+                                px: 8,
+                                borderRadius: 2,
+                                color: "#fff",
+                                borderColor: "#555",
+                                textTransform: "none",
+                                fontWeight: 700,
+                                "&:hover": { borderColor: "#fff", bgcolor: "rgba(255,255,255,0.05)" },
+                            }}
+                        >
+                            Close
                         </Button>
                     </Box>
                 </DialogContent>

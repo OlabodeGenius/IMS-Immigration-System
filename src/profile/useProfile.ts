@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabaseClient";
 
-export type UserRole = "IMMIGRATION" | "INSTITUTION";
+export type UserRole = "IMMIGRATION" | "INSTITUTION" | "STUDENT";
 
 export type Profile = {
     user_id: string;

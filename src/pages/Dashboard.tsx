@@ -1,15 +1,19 @@
-import { Container, Paper, Typography, Button } from "@mui/material";
+import { Container, Paper, Typography, Button, Box, Alert } from "@mui/material";
 import { useAuth } from "../auth/AuthProvider";
 import { useProfile } from "../profile/useProfile";
 import ImmigrationDashboard from "./ImmigrationDashboard";
 import InstitutionDashboard from "./InstitutionDashboard";
-import { useNavigate } from "react-router-dom";
+import StudentDashboard from "./StudentDashboard";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { DashboardShell } from "../components/DashboardShell";
+import StudentProfilePage from "./StudentProfilePage";
 
 export default function Dashboard() {
     const { user, signOut } = useAuth();
     const { data: profile, isLoading, error } = useProfile();
     const nav = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         // If user exists but no profile row yet → onboarding
@@ -38,6 +42,36 @@ export default function Dashboard() {
 
     // Profile missing -> Onboarding route will handle it
     if (!profile) return null;
+
+    if (profile.role === "STUDENT") {
+        const queryParams = new URLSearchParams(location.search);
+        const tab = queryParams.get("tab") || "overview";
+
+        return (
+            <DashboardShell title={tab === "profile" ? "" : "Student Portal"}>
+                {tab === "profile" ? (
+                    <StudentProfilePage />
+                ) : tab === "visa" ? (
+                    <Box>
+                        <Typography variant="h5" fontWeight={900}>Visa Status</Typography>
+                        <Alert severity="info" sx={{ mt: 2, borderRadius: 3 }}>
+                            Detailed visa history and document tracking is coming soon.
+                            Use the Dashboard tab to view your current status.
+                        </Alert>
+                    </Box>
+                ) : tab === "documents" ? (
+                    <Box>
+                        <Typography variant="h5" fontWeight={900}>Documents Hub</Typography>
+                        <Alert severity="info" sx={{ mt: 2, borderRadius: 3 }}>
+                            Your secure document vault is being initialized.
+                        </Alert>
+                    </Box>
+                ) : (
+                    <StudentDashboard />
+                )}
+            </DashboardShell>
+        );
+    }
 
     return (
         <>

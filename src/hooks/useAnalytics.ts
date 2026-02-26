@@ -253,3 +253,55 @@ export function useGlobalKPIs() {
         }
     });
 }
+
+export function usePresenceTrends(institutionId?: string) {
+    return useQuery({
+        queryKey: ["presence_trends", institutionId],
+        queryFn: async () => {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const dateStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+            let query = supabase
+                .from("attendance_records")
+                .select("attendance_date, status")
+                .gte("attendance_date", dateStr);
+
+            if (institutionId) {
+                // To filter by institution, we'd ideally join with students
+                // attendance_records -> student_id -> institution_id
+                // Since Supabase doesn't support complex joins in a single .select() easily for aggregation, 
+                // we can filter using inner join syntax if we fetch everything.
+                const { data: students } = await supabase
+                    .from("students")
+                    .select("id")
+                    .eq("institution_id", institutionId);
+
+                if (students && students.length > 0) {
+                    query = query.in("student_id", students.map(s => s.id));
+                } else {
+                    return [];
+                }
+            }
+
+            const { data, error } = await query.order("attendance_date", { ascending: true });
+            if (error) throw error;
+
+            // Aggregate by date
+            const dailyData: Record<string, { total: number; present: number }> = {};
+            data.forEach(rec => {
+                const date = rec.attendance_date;
+                if (!dailyData[date]) dailyData[date] = { total: 0, present: 0 };
+                dailyData[date].total++;
+                if (rec.status === 'PRESENT' || rec.status === 'LATE') {
+                    dailyData[date].present++;
+                }
+            });
+
+            return Object.entries(dailyData).map(([date, counts]) => ({
+                date: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                rate: Math.round((counts.present / counts.total) * 100)
+            }));
+        }
+    });
+}

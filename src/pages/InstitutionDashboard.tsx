@@ -67,12 +67,38 @@ export default function InstitutionDashboard() {
 
     return (
         <DashboardShell title={dashboardTitle}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-                <Tabs value={tabValue} onChange={handleTabChange} aria-label="institution dashboard tabs" textColor="primary" indicatorColor="primary">
+            <Box sx={{
+                mb: 4,
+                bgcolor: 'white',
+                borderRadius: 4,
+                p: 1,
+                border: '1px solid #F1F5F9',
+                display: 'inline-flex'
+            }}>
+                <Tabs
+                    value={tabValue}
+                    onChange={handleTabChange}
+                    aria-label="institution dashboard tabs"
+                    sx={{
+                        '& .MuiTabs-indicator': { display: 'none' },
+                        '& .MuiTab-root': {
+                            borderRadius: 3,
+                            fontWeight: 700,
+                            minHeight: 44,
+                            px: 3,
+                            transition: 'all 0.2s',
+                            '&.Mui-selected': {
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
+                            }
+                        }
+                    }}
+                >
                     <Tab label="Overview" />
                     <Tab label="My Students" />
                     <Tab label="Register Student" />
-                    <Tab label="Record Attendance" />
+                    <Tab label="Attendance" />
                     <Tab label="Visa Alerts" />
                 </Tabs>
             </Box>

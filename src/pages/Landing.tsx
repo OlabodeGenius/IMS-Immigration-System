@@ -17,6 +17,7 @@ import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import { Link as RouterLink } from "react-router-dom";
+import { useAuth } from "../auth/AuthProvider";
 
 function FeatureCard({
     icon,
@@ -72,6 +73,8 @@ function FeatureCard({
 }
 
 export default function Landing() {
+    const { user, signOut } = useAuth();
+
     return (
         <Box
             sx={{
@@ -107,30 +110,46 @@ export default function Landing() {
                         </Typography>
 
                         <Stack direction="row" spacing={2}>
-                            <Button
-                                component={RouterLink}
-                                to="/login"
-                                variant="outlined"
-                                sx={{
-                                    textTransform: "none",
-                                    fontWeight: 600,
-                                    px: 3
-                                }}
-                            >
-                                Login
-                            </Button>
-                            <Button
-                                component={RouterLink}
-                                to="/register"
-                                variant="contained"
-                                sx={{
-                                    textTransform: "none",
-                                    fontWeight: 600,
-                                    px: 3
-                                }}
-                            >
-                                Register / Sign Up
-                            </Button>
+                            {user ? (
+                                <Button
+                                    onClick={signOut}
+                                    variant="outlined"
+                                    sx={{
+                                        textTransform: "none",
+                                        fontWeight: 600,
+                                        px: 3
+                                    }}
+                                >
+                                    Sign Out
+                                </Button>
+                            ) : (
+                                <>
+                                    <Button
+                                        component={RouterLink}
+                                        to="/login"
+                                        variant="outlined"
+                                        sx={{
+                                            textTransform: "none",
+                                            fontWeight: 600,
+                                            px: 3
+                                        }}
+                                    >
+                                        Login
+                                    </Button>
+                                    <Button
+                                        component={RouterLink}
+                                        to="/register"
+                                        variant="contained"
+                                        sx={{
+                                            textTransform: "none",
+                                            fontWeight: 600,
+                                            px: 3
+                                        }}
+                                    >
+                                        Register / Sign Up
+                                    </Button>
+                                </>
+                            )}
                         </Stack>
                     </Stack>
                 </Container>
@@ -171,36 +190,72 @@ export default function Landing() {
                             </Typography>
 
                             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 4 }}>
-                                <Button
-                                    component={RouterLink}
-                                    to="/dashboard"
-                                    size="large"
-                                    variant="contained"
-                                    sx={{
-                                        textTransform: "none",
-                                        fontWeight: 600,
-                                        px: 4,
-                                        py: 1.5,
-                                        fontSize: "1rem"
-                                    }}
-                                >
-                                    Access System
-                                </Button>
-                                <Button
-                                    component={RouterLink}
-                                    to="/register"
-                                    size="large"
-                                    variant="outlined"
-                                    sx={{
-                                        textTransform: "none",
-                                        fontWeight: 600,
-                                        px: 4,
-                                        py: 1.5,
-                                        fontSize: "1rem"
-                                    }}
-                                >
-                                    Institution Registration
-                                </Button>
+                                {user ? (
+                                    <>
+                                        <Button
+                                            component={RouterLink}
+                                            to="/dashboard"
+                                            size="large"
+                                            variant="contained"
+                                            sx={{
+                                                textTransform: "none",
+                                                fontWeight: 600,
+                                                px: 4,
+                                                py: 1.5,
+                                                fontSize: "1rem"
+                                            }}
+                                        >
+                                            Go to Dashboard
+                                        </Button>
+                                        <Button
+                                            onClick={signOut}
+                                            size="large"
+                                            variant="outlined"
+                                            sx={{
+                                                textTransform: "none",
+                                                fontWeight: 600,
+                                                px: 4,
+                                                py: 1.5,
+                                                fontSize: "1rem"
+                                            }}
+                                        >
+                                            Sign Out
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Button
+                                            component={RouterLink}
+                                            to="/dashboard"
+                                            size="large"
+                                            variant="contained"
+                                            sx={{
+                                                textTransform: "none",
+                                                fontWeight: 600,
+                                                px: 4,
+                                                py: 1.5,
+                                                fontSize: "1rem"
+                                            }}
+                                        >
+                                            Access System
+                                        </Button>
+                                        <Button
+                                            component={RouterLink}
+                                            to="/register"
+                                            size="large"
+                                            variant="outlined"
+                                            sx={{
+                                                textTransform: "none",
+                                                fontWeight: 600,
+                                                px: 4,
+                                                py: 1.5,
+                                                fontSize: "1rem"
+                                            }}
+                                        >
+                                            Institution Registration
+                                        </Button>
+                                    </>
+                                )}
                             </Stack>
 
                             <Stack

@@ -1,6 +1,6 @@
 import React from "react";
 import { supabase } from "../lib/supabaseClient";
-import type { Profile } from "../types/database.types";
+import type { Profile } from "../types";
 
 type AuthContextValue = {
     user: any | null;
@@ -8,7 +8,7 @@ type AuthContextValue = {
     loading: boolean;
     signOut: () => Promise<void>;
     signIn: (email: string, password: string) => Promise<void>;
-    signUp: (email: string, password: string, metadata?: { full_name: string; role: 'IMMIGRATION' | 'INSTITUTION' }) => Promise<any>;
+    signUp: (email: string, password: string, metadata?: { full_name: string; role: 'IMMIGRATION' | 'INSTITUTION' | 'STUDENT' }) => Promise<any>;
 };
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
     };
 
-    const signUp = async (email: string, password: string, metadata?: { full_name: string; role: 'IMMIGRATION' | 'INSTITUTION' }) => {
+    const signUp = async (email: string, password: string, metadata?: { full_name: string; role: 'IMMIGRATION' | 'INSTITUTION' | 'STUDENT' }) => {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,

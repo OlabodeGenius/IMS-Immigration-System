@@ -6,7 +6,7 @@ import { SignJWT } from "https://esm.sh/jose@5.6.3";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*", // for dev; later you can restrict to your domain
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, prefer",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -38,17 +38,20 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
-      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
     });
 
     // Validate caller identity (must be logged in)
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData?.user) {
-      console.error("Auth error:", userError);
+    const jwt = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
+
+    if (userError || !user) {
+      console.error("Auth error in edge function:", userError?.message);
       return new Response(JSON.stringify({
         error: "Unauthorized",
-        details: userError?.message || "No user found in session",
-        debug_header: authHeader.substring(0, 20) + "..."
+        details: userError?.message || "Invalid session or token",
+        hint: "Please try logging out and logging back in if this persists.",
+        context: "mint-card-token"
       }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -86,9 +89,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Mint short-lived token (15 minutes)
+    // Mint short-lived token (24 hours for robust testing)
     const iat = Math.floor(Date.now() / 1000);
-    const exp = iat + 15 * 60;
+    const exp = iat + 24 * 60 * 60;
 
     const token = await new SignJWT({
       card_id: card.id,
@@ -101,7 +104,7 @@ Deno.serve(async (req) => {
       .setIssuer("ims-is")
       .sign(new TextEncoder().encode(jwtSecret));
 
-    return new Response(JSON.stringify({ token, expires_in: 900 }), {
+    return new Response(JSON.stringify({ token, expires_in: 86400 }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

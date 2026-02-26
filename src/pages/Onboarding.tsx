@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, Button, Container, Paper, Stack, TextField, Typography } from "@mui/material";
 import { supabase } from "../lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,20 @@ export default function Onboarding() {
     const [fullName, setFullName] = useState("");
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        supabase.auth.getSession().then(({ data }) => {
+            if (data.session?.user) {
+                supabase.from("profiles")
+                    .select("user_id")
+                    .eq("user_id", data.session.user.id)
+                    .single()
+                    .then(({ data: profile }) => {
+                        if (profile) nav("/dashboard", { replace: true });
+                    });
+            }
+        });
+    }, [nav]);
 
     const createProfile = async () => {
         setBusy(true);
@@ -23,8 +37,8 @@ export default function Onboarding() {
 
         const { error } = await supabase.from("profiles").insert({
             user_id: user.id,
-            role: "INSTITUTION",
-            full_name: fullName || null,
+            role: user.user_metadata?.role || "INSTITUTION",
+            full_name: fullName || user.user_metadata?.full_name || null,
             institution_id: null,
         });
 

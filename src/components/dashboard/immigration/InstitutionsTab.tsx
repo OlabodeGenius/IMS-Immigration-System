@@ -4,10 +4,13 @@ import { useInstitutions } from "../../../hooks/useInstitutions";
 import { DataTable } from "../../DataTable";
 import type { Institution } from "../../../types/database.types";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { AddInstitutionDialog } from "./AddInstitutionDialog";
 
 export function InstitutionsTab() {
     const { data: institutions = [], isLoading } = useInstitutions();
     const navigate = useNavigate();
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
     const columns = [
         { id: "name", label: "Institution Name" },
@@ -28,7 +31,7 @@ export function InstitutionsTab() {
                 <Button
                     variant="contained"
                     startIcon={<AddIcon />}
-                    onClick={() => console.log('Add institution placeholder')}
+                    onClick={() => setIsAddDialogOpen(true)}
                 >
                     Add Institution
                 </Button>
@@ -41,7 +44,11 @@ export function InstitutionsTab() {
                 searchPlaceholder="Search institutions..."
                 onRowClick={(row) => handleRowClick(row.id)}
             />
-            {/* TODO: Add Institution Dialog */}
+
+            <AddInstitutionDialog
+                open={isAddDialogOpen}
+                onClose={() => setIsAddDialogOpen(false)}
+            />
         </Box>
     );
 }

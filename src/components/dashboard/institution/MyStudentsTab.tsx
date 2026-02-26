@@ -6,7 +6,7 @@ import { useIssueStudentCard } from "../../../hooks/useStudentCards";
 import { DataTable } from "../../DataTable";
 import { StudentProfileDialog } from "../StudentProfileDialog";
 import type { Student } from "../../../types/database.types";
-import { Button, Stack } from "@mui/material";
+import { Button, Stack, Avatar } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { StudentCardDialog } from "../StudentCardDialog";
 
@@ -23,6 +23,18 @@ export function MyStudentsTab({ initialSearch = "" }: MyStudentsTabProps) {
     const [cardStudentId, setCardStudentId] = useState<string | null>(null);
 
     const columns = [
+        {
+            id: "photo",
+            label: "Photo",
+            render: (row: Student) => (
+                <Avatar
+                    src={row.photo_url || undefined}
+                    sx={{ width: 32, height: 32, fontSize: '0.8rem' }}
+                >
+                    {row.full_name?.charAt(0)}
+                </Avatar>
+            )
+        },
         { id: "full_name", label: "Full Name" },
         { id: "student_id_number", label: "Student ID" },
         { id: "nationality", label: "Nationality" },

@@ -31,7 +31,7 @@ const registerSchema = z.object({
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string(),
     fullName: z.string().min(2, "Full name is required"),
-    role: z.enum(["IMMIGRATION", "INSTITUTION"]),
+    role: z.enum(["IMMIGRATION", "INSTITUTION", "STUDENT"]),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
@@ -193,6 +193,7 @@ export default function Register() {
                                     >
                                         <MenuItem value="INSTITUTION">Educational Institution</MenuItem>
                                         <MenuItem value="IMMIGRATION">Immigration Authority</MenuItem>
+                                        <MenuItem value="STUDENT">International Student</MenuItem>
                                     </TextField>
                                 )}
                             />

@@ -1,16 +1,18 @@
-import { Box, Typography, Grid, Button, Tabs, Tab, Stack, CircularProgress } from "@mui/material";
+import { Box, Typography, Grid, Button, Tabs, Tab, Stack, CircularProgress, Paper } from "@mui/material";
 import { GetApp as ReportIcon } from "@mui/icons-material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { StatsCard } from "./StatsCard";
 import { ComplianceTable } from "./ComplianceTable";
 import { CriticalAlerts } from "./CriticalAlerts";
-import { useGlobalKPIs } from "../../../hooks/useAnalytics";
+import { useGlobalKPIs, usePresenceTrends } from "../../../hooks/useAnalytics";
+import { AttendanceTrendChart } from "../AttendanceTrendChart";
 
 export function OverviewTab() {
     const [locationTab, setLocationTab] = useState(0);
     const navigate = useNavigate();
     const { data: kpis, isLoading, error } = useGlobalKPIs();
+    const { data: presenceData, isLoading: presenceLoading } = usePresenceTrends();
 
     const handleLocationChange = (_event: React.SyntheticEvent, newValue: number) => {
         setLocationTab(newValue);
@@ -138,7 +140,17 @@ export function OverviewTab() {
             {/* Compliance and Alerts Section */}
             <Grid container spacing={3}>
                 <Grid size={{ xs: 12, lg: 8 }}>
-                    <ComplianceTable />
+                    <Stack spacing={3}>
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E2E8F0' }}>
+                            <AttendanceTrendChart
+                                data={presenceData || []}
+                                isLoading={presenceLoading}
+                                title="National Student Presence Rate (%)"
+                                height={250}
+                            />
+                        </Paper>
+                        <ComplianceTable />
+                    </Stack>
                 </Grid>
                 <Grid size={{ xs: 12, lg: 4 }}>
                     <CriticalAlerts />

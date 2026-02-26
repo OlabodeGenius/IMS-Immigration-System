@@ -1,13 +1,15 @@
-import { Box, Typography, Paper, Alert, Snackbar } from "@mui/material";
+import { Box, Typography, Paper, Alert } from "@mui/material";
 import { useProfile } from "../../../pages/useProfile";
 import { useCreateStudent } from "../../../hooks/useStudents";
 import { StudentForm } from "../../StudentForm";
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSnackbar } from "notistack";
 
 export function RegisterStudentTab() {
     const { data: profile } = useProfile();
     const { mutate: registerStudent, isPending: isLoading, error } = useCreateStudent();
-    const [successMsg, setSuccessMsg] = useState<string | null>(null);
+    const navigate = useNavigate();
+    const { enqueueSnackbar } = useSnackbar();
 
     const handleSubmit = (data: any) => {
         if (!profile?.institution_id) {
@@ -23,7 +25,8 @@ export function RegisterStudentTab() {
             },
             {
                 onSuccess: () => {
-                    setSuccessMsg("Student registered successfully!");
+                    enqueueSnackbar("Student registered successfully!", { variant: "success" });
+                    navigate("/dashboard?tab=students");
                 },
             }
         );
@@ -45,13 +48,6 @@ export function RegisterStudentTab() {
                     isLoading={isLoading}
                 />
             </Paper>
-
-            <Snackbar
-                open={!!successMsg}
-                autoHideDuration={6000}
-                onClose={() => setSuccessMsg(null)}
-                message={successMsg}
-            />
         </Box>
     );
 }

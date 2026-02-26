@@ -115,3 +115,45 @@ export function useApproveStudent() {
         },
     });
 }
+
+export function useBulkApproveStudents() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ studentIds, status, notes }: { studentIds: string[], status: VerificationStatus, notes?: string }) => {
+            const user = (await supabase.auth.getUser()).data.user;
+
+            // Perform updates
+            const { data, error } = await supabase
+                .from("students")
+                .update({
+                    metadata: {
+                        verification_status: status,
+                        verification_notes: notes,
+                        verified_at: new Date().toISOString(),
+                        verified_by: user?.id
+                    }
+                })
+                .in("id", studentIds)
+                .select();
+
+            if (error) throw error;
+
+            // Log individual verification requests for history
+            const logs = studentIds.map(id => ({
+                student_id: id,
+                verified_by: user?.id,
+                verification_type: 'MANUAL_APPROVAL',
+                result: { status, notes, bulk: true }
+            }));
+
+            await supabase.from("verification_requests").insert(logs);
+
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["students"] });
+            queryClient.invalidateQueries({ queryKey: ["verification_logs"] });
+        },
+    });
+}

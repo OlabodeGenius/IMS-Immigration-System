@@ -6,6 +6,8 @@ import { StudentsTab } from "../components/dashboard/immigration/StudentsTab";
 import { VisasTab } from "../components/dashboard/immigration/VisasTab";
 import { VerificationTab } from "../components/dashboard/immigration/VerificationTab";
 import { OverviewTab } from "../components/dashboard/immigration/OverviewTab";
+import AuditLedgerTab from "../components/dashboard/immigration/AuditLedgerTab";
+import { VisaApplicationsTab } from "../components/dashboard/immigration/VisaApplicationsTab";
 import { useLocation, useNavigate } from "react-router-dom";
 
 interface TabPanelProps {
@@ -49,23 +51,53 @@ export default function ImmigrationDashboard() {
         if (tab === 'institutions') return 2;
         if (tab === 'visas') return 3;
         if (tab === 'verification') return 4;
+        if (tab === 'audit') return 5;
+        if (tab === 'applications') return 6;
         return 0;
     }, [location.search]);
 
     const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-        const tabs = ['overview', 'students', 'institutions', 'visas', 'verification'];
+        const tabs = ['overview', 'students', 'institutions', 'visas', 'verification', 'audit', 'applications'];
         navigate(`/dashboard?tab=${tabs[newValue]}`);
     };
 
     return (
         <DashboardShell title="National Oversight Platform">
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-                <Tabs value={tabValue} onChange={handleTabChange} aria-label="dashboard tabs" textColor="primary" indicatorColor="primary">
-                    <Tab label="Dashboard" />
+            <Box sx={{
+                mb: 4,
+                bgcolor: 'white',
+                borderRadius: 4,
+                p: 1,
+                border: '1px solid #F1F5F9',
+                display: 'inline-flex'
+            }}>
+                <Tabs
+                    value={tabValue}
+                    onChange={handleTabChange}
+                    aria-label="immigration dashboard tabs"
+                    sx={{
+                        '& .MuiTabs-indicator': { display: 'none' },
+                        '& .MuiTab-root': {
+                            borderRadius: 3,
+                            fontWeight: 700,
+                            minHeight: 44,
+                            px: 3,
+                            transition: 'all 0.2s',
+                            '&.Mui-selected': {
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
+                            }
+                        }
+                    }}
+                >
+                    <Tab label="Overview" />
                     <Tab label="Students" />
                     <Tab label="Universities" />
                     <Tab label="Visas" />
-                    <Tab label="Verification Logs" />
+                    <Tab label="Verification" />
+                    <Tab label="Audit Ledger" />
+                    <Tab label="Visa Applications" />
                 </Tabs>
             </Box>
 
@@ -83,6 +115,12 @@ export default function ImmigrationDashboard() {
             </TabPanel>
             <TabPanel value={tabValue} index={4}>
                 <VerificationTab />
+            </TabPanel>
+            <TabPanel value={tabValue} index={5}>
+                <AuditLedgerTab />
+            </TabPanel>
+            <TabPanel value={tabValue} index={6}>
+                <VisaApplicationsTab />
             </TabPanel>
         </DashboardShell>
     );

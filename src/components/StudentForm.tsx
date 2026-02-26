@@ -8,9 +8,30 @@ import {
     Box,
     Typography,
     Paper,
+    Button,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
-import { StudentRegistrationSchema } from "../types/database.types";
+export const StudentRegistrationSchema = z.object({
+    student: z.object({
+        student_id_number: z.string().min(1, "Student ID is required"),
+        full_name: z.string().min(2, "Full name is required"),
+        nationality: z.string().min(1, "Nationality is required"),
+        date_of_birth: z.string().min(1, "Date of birth is required"),
+        passport_number: z.string().nullable().optional(),
+        email: z.string().email("Invalid email").nullable().optional().or(z.literal('')),
+        phone: z.string().nullable().optional(),
+        sex: z.enum(["Male", "Female", "Other", "Unknown"]),
+        photo_url: z.string().nullable().optional(),
+    }),
+    visa: z.object({
+        visa_type: z.string().min(1, "Visa Type is required"),
+        status: z.enum(["ACTIVE", "EXPIRED", "CANCELLED", "REVOKED", "PENDING"]),
+        visa_number: z.string().nullable().optional(),
+        start_date: z.string().nullable().optional().or(z.literal('')),
+        end_date: z.string().nullable().optional().or(z.literal('')),
+    }),
+});
+
+import { StudentPhotoUpload } from "./dashboard/StudentPhotoUpload";
 
 type StudentRegistrationData = z.infer<typeof StudentRegistrationSchema>;
 
@@ -36,6 +57,8 @@ export function StudentForm({ onSubmit, isLoading = false, defaultValues }: Stud
                 passport_number: defaultValues?.student?.passport_number ?? null,
                 email: defaultValues?.student?.email ?? null,
                 phone: defaultValues?.student?.phone ?? null,
+                sex: defaultValues?.student?.sex ?? "Male",
+                photo_url: defaultValues?.student?.photo_url ?? null,
             },
             visa: {
                 visa_type: defaultValues?.visa?.visa_type ?? "C9",
@@ -50,123 +73,160 @@ export function StudentForm({ onSubmit, isLoading = false, defaultValues }: Stud
     return (
         <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
             <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-                <Typography variant="h6" gutterBottom color="primary">
-                    Student Details
-                </Typography>
-                <Grid container spacing={2} mb={4}>
-                    <Grid size={{ xs: 12, md: 6 }}>
+                <Grid container spacing={3}>
+                    {/* Photo Upload Section */}
+                    <Grid size={{ xs: 12 }}>
                         <Controller
-                            name="student.full_name"
+                            name="student.photo_url"
                             control={control}
                             render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    label="Full Name"
-                                    fullWidth
-                                    error={!!errors.student?.full_name}
-                                    helperText={errors.student?.full_name?.message}
+                                <StudentPhotoUpload
+                                    value={field.value || null}
+                                    onChange={field.onChange}
                                 />
                             )}
                         />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                        <Controller
-                            name="student.student_id_number"
-                            control={control}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    label="Student ID Number"
-                                    fullWidth
-                                    error={!!errors.student?.student_id_number}
-                                    helperText={errors.student?.student_id_number?.message}
+
+                    <Grid size={{ xs: 12 }}>
+                        <Typography variant="h6" gutterBottom color="primary">
+                            Student Details
+                        </Typography>
+                        <Grid container spacing={2} mb={4}>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Controller
+                                    name="student.full_name"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Full Name"
+                                            fullWidth
+                                            error={!!errors.student?.full_name}
+                                            helperText={errors.student?.full_name?.message}
+                                        />
+                                    )}
                                 />
-                            )}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                        <Controller
-                            name="student.nationality"
-                            control={control}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    label="Nationality"
-                                    fullWidth
-                                    error={!!errors.student?.nationality}
-                                    helperText={errors.student?.nationality?.message}
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Controller
+                                    name="student.student_id_number"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Student ID Number"
+                                            fullWidth
+                                            error={!!errors.student?.student_id_number}
+                                            helperText={errors.student?.student_id_number?.message}
+                                        />
+                                    )}
                                 />
-                            )}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                        <Controller
-                            name="student.passport_number"
-                            control={control}
-                            render={({ field: { value, onChange, ...field } }) => (
-                                <TextField
-                                    {...field}
-                                    value={value || ""}
-                                    onChange={(e) => onChange(e.target.value || null)}
-                                    label="Passport Number"
-                                    fullWidth
-                                    error={!!errors.student?.passport_number}
-                                    helperText={errors.student?.passport_number?.message}
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Controller
+                                    name="student.nationality"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Nationality"
+                                            fullWidth
+                                            error={!!errors.student?.nationality}
+                                            helperText={errors.student?.nationality?.message}
+                                        />
+                                    )}
                                 />
-                            )}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                        <Controller
-                            name="student.date_of_birth"
-                            control={control}
-                            render={({ field }) => (
-                                <TextField
-                                    {...field}
-                                    label="Date of Birth"
-                                    type="date"
-                                    fullWidth
-                                    InputLabelProps={{ shrink: true }}
-                                    error={!!errors.student?.date_of_birth}
-                                    helperText={errors.student?.date_of_birth?.message}
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Controller
+                                    name="student.sex"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            select
+                                            label="Sex"
+                                            fullWidth
+                                            error={!!errors.student?.sex}
+                                            helperText={errors.student?.sex?.message}
+                                        >
+                                            <MenuItem value="Male">Male</MenuItem>
+                                            <MenuItem value="Female">Female</MenuItem>
+                                        </TextField>
+                                    )}
                                 />
-                            )}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                        <Controller
-                            name="student.email"
-                            control={control}
-                            render={({ field: { value, onChange, ...field } }) => (
-                                <TextField
-                                    {...field}
-                                    value={value || ""}
-                                    onChange={(e) => onChange(e.target.value || null)}
-                                    label="Email (Optional)"
-                                    type="email"
-                                    fullWidth
-                                    error={!!errors.student?.email}
-                                    helperText={errors.student?.email?.message}
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Controller
+                                    name="student.passport_number"
+                                    control={control}
+                                    render={({ field: { value, onChange, ...field } }) => (
+                                        <TextField
+                                            {...field}
+                                            value={value || ""}
+                                            onChange={(e) => onChange(e.target.value || null)}
+                                            label="Passport Number"
+                                            fullWidth
+                                            error={!!errors.student?.passport_number}
+                                            helperText={errors.student?.passport_number?.message}
+                                        />
+                                    )}
                                 />
-                            )}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                        <Controller
-                            name="student.phone"
-                            control={control}
-                            render={({ field: { value, onChange, ...field } }) => (
-                                <TextField
-                                    {...field}
-                                    value={value || ""}
-                                    onChange={(e) => onChange(e.target.value || null)}
-                                    label="Phone (Optional)"
-                                    fullWidth
-                                    error={!!errors.student?.phone}
-                                    helperText={errors.student?.phone?.message}
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Controller
+                                    name="student.date_of_birth"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <TextField
+                                            {...field}
+                                            label="Date of Birth"
+                                            type="date"
+                                            fullWidth
+                                            InputLabelProps={{ shrink: true }}
+                                            error={!!errors.student?.date_of_birth}
+                                            helperText={errors.student?.date_of_birth?.message}
+                                        />
+                                    )}
                                 />
-                            )}
-                        />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Controller
+                                    name="student.email"
+                                    control={control}
+                                    render={({ field: { value, onChange, ...field } }) => (
+                                        <TextField
+                                            {...field}
+                                            value={value || ""}
+                                            onChange={(e) => onChange(e.target.value || null)}
+                                            label="Email (Optional)"
+                                            type="email"
+                                            fullWidth
+                                            error={!!errors.student?.email}
+                                            helperText={errors.student?.email?.message}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Controller
+                                    name="student.phone"
+                                    control={control}
+                                    render={({ field: { value, onChange, ...field } }) => (
+                                        <TextField
+                                            {...field}
+                                            value={value || ""}
+                                            onChange={(e) => onChange(e.target.value || null)}
+                                            label="Phone (Optional)"
+                                            fullWidth
+                                            error={!!errors.student?.phone}
+                                            helperText={errors.student?.phone?.message}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+                        </Grid>
                     </Grid>
                 </Grid>
 
@@ -246,14 +306,14 @@ export function StudentForm({ onSubmit, isLoading = false, defaultValues }: Stud
                 </Grid>
 
                 <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-                    <LoadingButton
+                    <Button
                         type="submit"
                         variant="contained"
                         loading={isLoading}
                         size="large"
                     >
                         Register Student
-                    </LoadingButton>
+                    </Button>
                 </Box>
             </Box>
         </Paper>
