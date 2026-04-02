@@ -1,10 +1,50 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import type { Notification } from "../types/database.types";
 import { useAuth } from "../auth/AuthProvider";
 
 export function useNotifications() {
     const { user, profile } = useAuth();
+    const queryClient = useQueryClient();
+
+    // ── Realtime subscription – invalidates the query whenever a new notification
+    // is inserted for this user so the badge count updates automatically.
+    useEffect(() => {
+        if (!user) return;
+
+        const channel = supabase
+            .channel(`notifications:${user.id}`)
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "notifications",
+                    filter: `user_id=eq.${user.id}`,
+                },
+                () => {
+                    queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "notifications",
+                    filter: `user_id=eq.${user.id}`,
+                },
+                () => {
+                    queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user?.id, queryClient]);
 
     return useQuery({
         queryKey: ["notifications", user?.id],
@@ -16,7 +56,8 @@ export function useNotifications() {
                 .from("notifications")
                 .select("*")
                 .eq("user_id", user.id)
-                .order("created_at", { ascending: false });
+                .order("created_at", { ascending: false })
+                .limit(50);
 
             if (error) {
                 console.error("Error fetching notifications:", error);
@@ -47,41 +88,23 @@ export function useNotifications() {
                     id: `virtual-${v.id}`,
                     user_id: user.id,
                     notification_type: 'VISA_EXPIRY',
-                    title: 'Upcoming Visa Expiry',
-                    message: `${v.student?.full_name}'s visa expires in ${daysLeft} days (${v.end_date}).`,
+                    title: daysLeft <= 7 ? '🚨 Urgent: Visa Expiry' : '⚠️ Upcoming Visa Expiry',
+                    message: `${v.student?.full_name}'s visa expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'} (${v.end_date}).`,
                     is_read: false,
                     created_at: new Date().toISOString()
                 } as Notification;
             });
 
-            // Combine and sort
+            // Combine real + virtual; deduplicate by id
             const combined = [...(dbNotifications || []), ...virtualNotifications];
 
-            // MOCK DATA FOR VERIFICATION IF EMPTY
-            if (combined.length === 0) {
-                combined.push({
-                    id: 'mock-1',
-                    user_id: user.id,
-                    notification_type: 'VISA_EXPIRY',
-                    title: 'Urgent: Visa Expiry',
-                    message: 'Student Azamat Maratov visa expires in 5 days.',
-                    is_read: false,
-                    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() // 2 hours ago
-                } as Notification);
-                combined.push({
-                    id: 'mock-2',
-                    user_id: user.id,
-                    notification_type: 'SYSTEM',
-                    title: 'System Update',
-                    message: 'The IMS platform has been updated to version 2.4.',
-                    is_read: true,
-                    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() // 1 day ago
-                } as Notification);
-            }
-
-            return combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            return combined.sort((a, b) =>
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
         },
-        enabled: !!user || true, // Force enabled for dev/mock
+        enabled: !!user,
+        // Refresh every 5 minutes as a safety net
+        refetchInterval: 5 * 60 * 1000,
     });
 }
 
@@ -91,12 +114,69 @@ export function useMarkNotificationRead() {
 
     return useMutation({
         mutationFn: async (id: string) => {
-            if (id.startsWith('virtual-') || id.startsWith('mock-')) return; // Virtual/mock ones can't be marked in DB
+            // Virtual / mock notifications don't live in the DB
+            if (id.startsWith('virtual-') || id.startsWith('mock-')) return;
 
             const { error } = await supabase
                 .from("notifications")
                 .update({ is_read: true })
                 .eq("id", id);
+
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+        },
+    });
+}
+
+export function useMarkAllNotificationsRead() {
+    const queryClient = useQueryClient();
+    const { user } = useAuth();
+
+    return useMutation({
+        mutationFn: async () => {
+            if (!user) return;
+
+            const { error } = await supabase
+                .from("notifications")
+                .update({ is_read: true })
+                .eq("user_id", user.id)
+                .eq("is_read", false);
+
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+        },
+    });
+}
+
+/** Utility to create a notification record programmatically from the frontend.
+ *  Use sparingly – prefer DB triggers for reliable delivery. */
+export function useCreateNotification() {
+    const queryClient = useQueryClient();
+    const { user } = useAuth();
+
+    return useMutation({
+        mutationFn: async ({
+            targetUserId,
+            type,
+            title,
+            message,
+        }: {
+            targetUserId: string;
+            type: string;
+            title: string;
+            message: string;
+        }) => {
+            const { error } = await supabase.from("notifications").insert({
+                user_id: targetUserId,
+                notification_type: type,
+                title,
+                message,
+                is_read: false,
+            });
 
             if (error) throw error;
         },
