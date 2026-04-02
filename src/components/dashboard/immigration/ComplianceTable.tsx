@@ -17,8 +17,8 @@ import { Search as SearchIcon, FilterList as FilterIcon } from '@mui/icons-mater
 import { useAllComplianceMetrics } from '../../../hooks/useAnalytics';
 import { useNavigate } from 'react-router-dom';
 
-export function ComplianceTable() {
-    const { data: complianceData = [], isLoading } = useAllComplianceMetrics();
+export function ComplianceTable({ city }: { city?: string }) {
+    const { data: complianceData = [], isLoading } = useAllComplianceMetrics(city);
     const navigate = useNavigate();
 
     const handleRowClick = (institutionId: string) => {

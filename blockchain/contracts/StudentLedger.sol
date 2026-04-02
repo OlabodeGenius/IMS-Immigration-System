@@ -3,20 +3,21 @@ pragma solidity ^0.8.19;
 
 /**
  * @title StudentLedger
- * @dev Simple registry to store the SHA-256 hash of a student's card record.
+ * @dev Registry to store and verify SHA-256 hashes of student card records.
+ *      Supports issuance, verification, and revocation of cards.
  */
 contract StudentLedger {
     struct CardRecord {
         string recordHash;
         uint256 timestamp;
         address issuer;
+        bool isActive;
     }
 
-    // Mapping from card_id (UUID string) to CardRecord
     mapping(string => CardRecord) public records;
 
-    // Event emitted when a new card is issued
     event CardIssued(string indexed cardId, string recordHash, uint256 timestamp, address issuer);
+    event CardRevoked(string indexed cardId, uint256 timestamp, address revokedBy);
 
     /**
      * @dev Issue a new card record to the blockchain.
@@ -29,24 +30,48 @@ contract StudentLedger {
         records[cardId] = CardRecord({
             recordHash: recordHash,
             timestamp: block.timestamp,
-            issuer: msg.sender
+            issuer: msg.sender,
+            isActive: true
         });
 
         emit CardIssued(cardId, recordHash, block.timestamp, msg.sender);
     }
 
     /**
-     * @dev Verify a card record against its hash
+     * @dev Revoke a previously issued card. Only the original issuer can revoke.
+     * @param cardId The unique identifier of the card (UUID)
+     */
+    function revokeCard(string memory cardId) public {
+        require(bytes(records[cardId].recordHash).length > 0, "Card does not exist");
+        require(records[cardId].isActive, "Card is already revoked");
+        require(records[cardId].issuer == msg.sender, "Only the original issuer can revoke");
+
+        records[cardId].isActive = false;
+
+        emit CardRevoked(cardId, block.timestamp, msg.sender);
+    }
+
+    /**
+     * @dev Verify a card record against its hash. Returns false if revoked.
      */
     function verifyCard(string memory cardId, string memory expectedHash) public view returns (bool) {
-        string memory actualHash = records[cardId].recordHash;
-        
-        // If it doesn't exist, actualHash length is 0, so it will return false
-        if (bytes(actualHash).length == 0 || bytes(expectedHash).length == 0) {
+        CardRecord memory card = records[cardId];
+
+        if (bytes(card.recordHash).length == 0 || bytes(expectedHash).length == 0) {
             return false;
         }
-        
-        // Return true if strings match
-        return keccak256(abi.encodePacked(actualHash)) == keccak256(abi.encodePacked(expectedHash));
+
+        if (!card.isActive) {
+            return false;
+        }
+
+        return keccak256(abi.encodePacked(card.recordHash)) == keccak256(abi.encodePacked(expectedHash));
+    }
+
+    /**
+     * @dev Check if a card is currently active (not revoked).
+     */
+    function isCardActive(string memory cardId) public view returns (bool) {
+        return bytes(records[cardId].recordHash).length > 0 && records[cardId].isActive;
     }
 }

@@ -20,25 +20,31 @@ import {
 } from '@mui/material';
 import {
     Logout as LogoutIcon,
-    CloudUpload as UploadIcon,
     NotificationsActive as AlertIcon,
     CheckCircleOutline as SuccessIcon,
     Description as DocIcon,
     AccountBalanceWallet as WalletIcon,
     ArrowForward as ArrowIcon,
+    OpenInNew as OpenInNewIcon,
     ErrorOutline as PendingIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthProvider';
 import { useMyStudentProfile } from '../hooks/useStudents';
+import { useDocuments } from '../hooks/useDocuments';
+import { usePayments } from '../hooks/usePayments';
 import { StudentCardFront } from '../components/DigitalStudentCard';
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from 'recharts';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { VisaRenewalWizard } from '../components/dashboard/immigration/VisaRenewalWizard';
 
+
 export default function StudentDashboard() {
     const { signOut } = useAuth();
     const { data: student, isLoading } = useMyStudentProfile();
     const [renewalOpen, setRenewalOpen] = useState(false);
+
+    const { data: documents = [] } = useDocuments(student?.id ?? null);
+    const { data: payments = [] } = usePayments(student?.id ?? null);
 
     const attendancePercent = useMemo(() => {
         if (!student?.attendance || student.attendance.length === 0) return 85; // Mocking better default for visual
@@ -260,8 +266,8 @@ export default function StudentDashboard() {
                             {/* Attendance Component */}
                             <Paper sx={{ p: 4, borderRadius: 5, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                                 <Typography variant="h6" fontWeight={900} mb={3}>Attendance Goal</Typography>
-                                <Box sx={{ height: 260, width: '100%', position: 'relative' }}>
-                                    <ResponsiveContainer width="100%" height="100%">
+                                <Box sx={{ height: 260, width: '100%', position: 'relative', display: 'flex', justifyContent: 'center' }}>
+                                    <ResponsiveContainer width="99%" height="99%">
                                         <PieChart>
                                             <Pie
                                                 data={[
@@ -306,54 +312,85 @@ export default function StudentDashboard() {
                                 </Stack>
                             </Paper>
 
-                            {/* Documents Hub */}
+                            {/* Documents Hub - LIVE */}
                             <Paper sx={{ p: 4, borderRadius: 5, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                                 <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
                                     <Typography variant="h6" fontWeight={900}>Recent Documents</Typography>
                                     <DocIcon color="action" />
                                 </Stack>
-                                <Stack spacing={2}>
-                                    {[
-                                        { name: 'Passport_Copy.pdf', size: '1.2 MB', date: 'Oct 12' },
-                                        { name: 'Enrollment_Letter.pdf', size: '840 KB', date: 'Oct 10' }
-                                    ].map((doc, idx) => (
-                                        <Stack key={idx} direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                                            <Stack direction="row" spacing={1.5} alignItems="center">
-                                                <Box sx={{ bgcolor: '#F1F5F9', p: 1, borderRadius: 1.5 }}>
-                                                    <DocIcon sx={{ fontSize: 18, color: '#64748B' }} />
-                                                </Box>
-                                                <Box>
-                                                    <Typography variant="body2" fontWeight={800}>{doc.name}</Typography>
-                                                    <Typography variant="caption" color="text.secondary">{doc.size} • {doc.date}</Typography>
-                                                </Box>
+                                {documents.length === 0 ? (
+                                    <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 3, fontStyle: 'italic' }}>
+                                        No documents uploaded yet.
+                                    </Typography>
+                                ) : (
+                                    <Stack spacing={2}>
+                                        {documents.slice(0, 4).map((doc) => (
+                                            <Stack key={doc.id} direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                                                <Stack direction="row" spacing={1.5} alignItems="center">
+                                                    <Box sx={{ bgcolor: '#F1F5F9', p: 1, borderRadius: 1.5 }}>
+                                                        <DocIcon sx={{ fontSize: 18, color: '#64748B' }} />
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography variant="body2" fontWeight={800}>{doc.name}</Typography>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {doc.file_type} • {(doc.size / 1024).toFixed(0)} KB • {doc.created_at ? format(new Date(doc.created_at), 'MMM d') : '—'}
+                                                        </Typography>
+                                                    </Box>
+                                                </Stack>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={async () => {
+                                                        const { data } = await import('../lib/supabaseClient').then(m => m.supabase.storage.from('documents').createSignedUrl(doc.file_path, 60));
+                                                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                                                    }}
+                                                >
+                                                    <OpenInNewIcon fontSize="small" />
+                                                </IconButton>
                                             </Stack>
-                                            <IconButton size="small"><UploadIcon fontSize="small" /></IconButton>
-                                        </Stack>
-                                    ))}
-                                </Stack>
+                                        ))}
+                                    </Stack>
+                                )}
                             </Paper>
 
-                            {/* Wallet / Payments */}
+
+                            {/* Wallet / Payments – LIVE */}
                             <Paper sx={{ p: 4, borderRadius: 5, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                                 <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
                                     <Typography variant="h6" fontWeight={900}>Payments</Typography>
                                     <WalletIcon color="action" />
                                 </Stack>
                                 <Box sx={{ mb: 3 }}>
-                                    <Typography variant="caption" fontWeight={800} color="#94A3B8">Service Credits</Typography>
-                                    <Typography variant="h4" fontWeight={900} color="primary.main">12,500 ₸</Typography>
+                                    <Typography variant="caption" fontWeight={800} color="#94A3B8">Total Paid</Typography>
+                                    <Typography variant="h4" fontWeight={900} color="primary.main">
+                                        {payments.filter(p => p.status === 'PAID').reduce((s, p) => s + p.amount, 0).toLocaleString()} {payments[0]?.currency || '₸'}
+                                    </Typography>
                                 </Box>
                                 <Divider sx={{ mb: 3 }} />
-                                <Stack spacing={2}>
-                                    <Stack direction="row" justifyContent="space-between">
-                                        <Typography variant="body2" color="text.secondary">Visa Processing Fee</Typography>
-                                        <Typography variant="body2" fontWeight={800}>- 8,000 ₸</Typography>
+                                {payments.length === 0 ? (
+                                    <Typography variant="body2" color="text.secondary" fontStyle="italic">No payment records found.</Typography>
+                                ) : (
+                                    <Stack spacing={2}>
+                                        {payments.slice(0, 4).map((p) => (
+                                            <Stack key={p.id} direction="row" justifyContent="space-between" alignItems="center">
+                                                <Box>
+                                                    <Typography variant="body2" fontWeight={700}>{p.payment_type.replace(/_/g, ' ')}</Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {p.payment_date ? format(new Date(p.payment_date), 'MMM d, yyyy') : '—'}
+                                                    </Typography>
+                                                </Box>
+                                                <Chip
+                                                    label={`${p.status === 'PAID' ? '-' : ''}${p.amount.toLocaleString()} ${p.currency || '₸'}`}
+                                                    size="small"
+                                                    sx={{
+                                                        fontWeight: 800,
+                                                        bgcolor: p.status === 'PAID' ? '#FEF2F2' : '#F0FDF4',
+                                                        color: p.status === 'PAID' ? '#DC2626' : '#16A34A',
+                                                    }}
+                                                />
+                                            </Stack>
+                                        ))}
                                     </Stack>
-                                    <Stack direction="row" justifyContent="space-between">
-                                        <Typography variant="body2" color="text.secondary">Library Deposit</Typography>
-                                        <Typography variant="body2" fontWeight={800}>- 4,500 ₸</Typography>
-                                    </Stack>
-                                </Stack>
+                                )}
                             </Paper>
                         </Stack>
                     </Grid>

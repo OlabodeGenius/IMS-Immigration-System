@@ -1,13 +1,15 @@
-import { Paper, Typography, Box, Stack, alpha, Skeleton } from '@mui/material';
+import { Paper, Typography, Box, Stack, alpha, Skeleton, Button } from '@mui/material';
 import {
     GppBad as FraudIcon,
     EventBusy as OverdueIcon,
     ErrorOutline as AlertIcon
 } from '@mui/icons-material';
 import { useSystemCriticalAlerts } from '../../../hooks/useAnalytics';
+import { useNavigate } from 'react-router-dom';
 
 export function CriticalAlerts() {
     const { data: alerts = [], isLoading } = useSystemCriticalAlerts();
+    const navigate = useNavigate();
 
     const getIcon = (type: string) => {
         switch (type) {
@@ -63,13 +65,20 @@ export function CriticalAlerts() {
                     {alerts.map((alert) => (
                         <Box
                             key={alert.id}
+                            onClick={() => navigate(`/dashboard?tab=students&search=${alert.studentId}`)}
                             sx={{
                                 p: 2,
                                 borderRadius: 3,
                                 border: `1px solid ${alpha(getIcon(alert.type).props.sx.color, 0.1)}`,
                                 bgcolor: getBgColor(alert.type),
                                 display: 'flex',
-                                gap: 2
+                                gap: 2,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                                }
                             }}
                         >
                             <Box sx={{
@@ -85,7 +94,7 @@ export function CriticalAlerts() {
                             }}>
                                 {getIcon(alert.type)}
                             </Box>
-                            <Box>
+                            <Box sx={{ flexGrow: 1 }}>
                                 <Typography variant="subtitle2" fontWeight={800} color="#1E293B" lineHeight={1.2} mb={0.5}>
                                     {alert.title}
                                 </Typography>
@@ -95,6 +104,11 @@ export function CriticalAlerts() {
                                 <Typography variant="caption" color="text.secondary" fontWeight={500}>
                                     {alert.time} - {alert.location}
                                 </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Button size="small" variant="text" color="inherit" sx={{ fontWeight: 700, fontSize: '0.75rem' }}>
+                                    Review
+                                </Button>
                             </Box>
                         </Box>
                     ))}

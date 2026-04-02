@@ -24,6 +24,7 @@ import {
     PhotoCamera as PhotoCameraIcon,
     Save as SaveIcon,
 } from '@mui/icons-material';
+import { DocumentManager } from "../components/dashboard/institution/DocumentManager";
 import { useMyStudentProfile, useUpdateStudent } from '../hooks/useStudents';
 
 export default function StudentProfilePage() {
@@ -41,8 +42,9 @@ export default function StudentProfilePage() {
                 nationality: student.nationality || '',
                 iin: student.iin || '',
                 passport_number: student.passport_number || '',
-                phone: student.phone || '',
                 email: student.email || '',
+                phone: student.phone || '',
+                local_address: (student.metadata as any)?.local_address || '',
                 sex: student.sex || 'Male',
                 institution_name: student.institution?.name || ''
             });
@@ -66,7 +68,12 @@ export default function StudentProfilePage() {
         try {
             await updateStudent.mutateAsync({
                 id: student.id,
-                ...formData
+                email: formData.email,
+                phone: formData.phone,
+                metadata: {
+                    ...((student.metadata as any) || {}),
+                    local_address: formData.local_address
+                }
             });
             setSuccessMsg(true);
             refetch();
@@ -188,34 +195,37 @@ export default function StudentProfilePage() {
                                 <Typography variant="caption" fontWeight={700} color="#64748B" sx={{ mb: 1, display: 'block' }}>Full Name (Latin)</Typography>
                                 <TextField
                                     fullWidth
+                                    disabled
                                     name="full_name"
                                     value={formData.full_name}
                                     onChange={handleChange}
                                     variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F8FAFC' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F1F5F9' } }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 12, md: 6 }}>
                                 <Typography variant="caption" fontWeight={700} color="#64748B" sx={{ mb: 1, display: 'block' }}>Full Name (Cyrillic)</Typography>
                                 <TextField
                                     fullWidth
+                                    disabled
                                     name="full_name_cyrillic"
                                     value={formData.full_name_cyrillic}
                                     onChange={handleChange}
                                     variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F8FAFC' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F1F5F9' } }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 12, md: 6 }}>
                                 <Typography variant="caption" fontWeight={700} color="#64748B" sx={{ mb: 1, display: 'block' }}>Date of Birth</Typography>
                                 <TextField
                                     fullWidth
+                                    disabled
                                     type="date"
                                     name="date_of_birth"
                                     value={formData.date_of_birth}
                                     onChange={handleChange}
                                     variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F8FAFC' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F1F5F9' } }}
                                     InputLabelProps={{ shrink: true }}
                                 />
                             </Grid>
@@ -223,11 +233,12 @@ export default function StudentProfilePage() {
                                 <Typography variant="caption" fontWeight={700} color="#64748B" sx={{ mb: 1, display: 'block' }}>Nationality</Typography>
                                 <TextField
                                     fullWidth
+                                    disabled
                                     name="nationality"
                                     value={formData.nationality}
                                     onChange={handleChange}
                                     variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F8FAFC' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F1F5F9' } }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 12, md: 6 }}>
@@ -235,12 +246,13 @@ export default function StudentProfilePage() {
                                 <TextField
                                     select
                                     fullWidth
+                                    disabled
                                     name="sex"
                                     value={formData.sex}
                                     onChange={handleChange}
                                     SelectProps={{ native: true }}
                                     variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F8FAFC' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F1F5F9' } }}
                                 >
                                     <option value="Male">Male</option>
                                     <option value="Female">Female</option>
@@ -266,12 +278,13 @@ export default function StudentProfilePage() {
                                 </Stack>
                                 <TextField
                                     fullWidth
+                                    disabled
                                     name="iin"
                                     value={formData.iin}
                                     onChange={handleChange}
                                     placeholder="000000000000"
                                     variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F8FAFC' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F1F5F9' } }}
                                 />
                             </Grid>
                         </Grid>
@@ -296,20 +309,22 @@ export default function StudentProfilePage() {
                                 <Typography variant="caption" fontWeight={700} color="#64748B" sx={{ mb: 1, display: 'block' }}>Passport Number</Typography>
                                 <TextField
                                     fullWidth
+                                    disabled
                                     name="passport_number"
                                     value={formData.passport_number}
                                     onChange={handleChange}
                                     variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F8FAFC' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F1F5F9' } }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 12, md: 6 }}>
                                 <Typography variant="caption" fontWeight={700} color="#64748B" sx={{ mb: 1, display: 'block' }}>Expiry Date</Typography>
                                 <TextField
                                     fullWidth
+                                    disabled
                                     type="date"
                                     variant="outlined"
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F8FAFC' } }}
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F1F5F9' } }}
                                     InputLabelProps={{ shrink: true }}
                                 />
                             </Grid>
@@ -353,7 +368,38 @@ export default function StudentProfilePage() {
                                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F8FAFC' } }}
                                 />
                             </Grid>
+                            <Grid size={{ xs: 12 }}>
+                                <Typography variant="caption" fontWeight={700} color="#64748B" sx={{ mb: 1, display: 'block' }}>Local Address in Kazakhstan</Typography>
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={2}
+                                    name="local_address"
+                                    value={formData.local_address}
+                                    onChange={handleChange}
+                                    placeholder="e.g. Abay Ave 10, Almaty, Apartment 2"
+                                    variant="outlined"
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F8FAFC' } }}
+                                />
+                            </Grid>
                         </Grid>
+                    </AccordionDetails>
+                </Accordion>
+
+                {/* Documents Management */}
+                <Accordion
+                    elevation={0}
+                    sx={{
+                        border: '1px solid #F1F5F9',
+                        borderRadius: '16px !important',
+                        '&:before': { display: 'none' }
+                    }}
+                >
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="subtitle1" fontWeight={800} color="#1E293B">Documents</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ px: 3, pb: 4, bgcolor: '#F8FAFC', borderRadius: '0 0 16px 16px' }}>
+                        {student && <DocumentManager studentId={student.id} />}
                     </AccordionDetails>
                 </Accordion>
 

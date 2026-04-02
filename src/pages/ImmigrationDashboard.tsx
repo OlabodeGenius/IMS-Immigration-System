@@ -8,6 +8,8 @@ import { VerificationTab } from "../components/dashboard/immigration/Verificatio
 import { OverviewTab } from "../components/dashboard/immigration/OverviewTab";
 import AuditLedgerTab from "../components/dashboard/immigration/AuditLedgerTab";
 import { VisaApplicationsTab } from "../components/dashboard/immigration/VisaApplicationsTab";
+import { ReportsTab } from "../components/dashboard/immigration/ReportsTab";
+import { VisaAlertsTab } from "../components/dashboard/immigration/VisaAlertsTab";
 import { useLocation, useNavigate } from "react-router-dom";
 
 interface TabPanelProps {
@@ -53,11 +55,13 @@ export default function ImmigrationDashboard() {
         if (tab === 'verification') return 4;
         if (tab === 'audit') return 5;
         if (tab === 'applications') return 6;
+        if (tab === 'reports') return 7;
+        if (tab === 'alerts') return 8;
         return 0;
     }, [location.search]);
 
     const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-        const tabs = ['overview', 'students', 'institutions', 'visas', 'verification', 'audit', 'applications'];
+        const tabs = ['overview', 'students', 'institutions', 'visas', 'verification', 'audit', 'applications', 'reports', 'alerts'];
         navigate(`/dashboard?tab=${tabs[newValue]}`);
     };
 
@@ -98,6 +102,8 @@ export default function ImmigrationDashboard() {
                     <Tab label="Verification" />
                     <Tab label="Audit Ledger" />
                     <Tab label="Visa Applications" />
+                    <Tab label="Reports" />
+                    <Tab label="Alerts" />
                 </Tabs>
             </Box>
 
@@ -121,6 +127,12 @@ export default function ImmigrationDashboard() {
             </TabPanel>
             <TabPanel value={tabValue} index={6}>
                 <VisaApplicationsTab />
+            </TabPanel>
+            <TabPanel value={tabValue} index={7}>
+                <ReportsTab />
+            </TabPanel>
+            <TabPanel value={tabValue} index={8}>
+                <VisaAlertsTab />
             </TabPanel>
         </DashboardShell>
     );

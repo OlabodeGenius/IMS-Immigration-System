@@ -6,9 +6,9 @@ import type { Student } from "../types";
 // Fetch Hooks
 // ===================================
 
-export function useStudents(institutionId?: string) {
+export function useStudents(institutionId?: string, searchQuery?: string) {
     return useQuery({
-        queryKey: ["students", institutionId],
+        queryKey: ["students", institutionId, searchQuery],
         queryFn: async () => {
             let query = supabase
                 .from("students")
@@ -17,6 +17,12 @@ export function useStudents(institutionId?: string) {
 
             if (institutionId) {
                 query = query.eq("institution_id", institutionId);
+            }
+
+            if (searchQuery) {
+                // ilike is case-insensitive. We check against name, passport, student ID, and iin
+                const search = `%${searchQuery}%`;
+                query = query.or(`full_name.ilike.${search},passport_number.ilike.${search},student_id_number.ilike.${search},iin.ilike.${search}`);
             }
 
             const { data, error } = await query;
@@ -47,13 +53,20 @@ export function useMyStudentProfile() {
     return useQuery({
         queryKey: ["my_student_profile"],
         queryFn: async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("Not authenticated");
+            let sessionUser = null;
+            try {
+                const { data } = await supabase.auth.getUser();
+                sessionUser = data.user;
+            } catch (err) {
+                console.warn("Network error fetching auth user:", err);
+            }
+
+            if (!sessionUser) throw new Error("Not authenticated");
 
             const { data, error } = await supabase
                 .from("students")
                 .select("*, visa:visas(*), institution:institutions(*), attendance:attendance_records(*)")
-                .eq("user_id", user.id)
+                .eq("user_id", sessionUser.id)
                 .single();
 
             if (error) {
@@ -135,3 +148,37 @@ export function useUpdateStudent() {
         },
     });
 }
+
+export function useBulkImportStudents() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: { students: any[]; institution_id: string }) => {
+            const mappedStudents = payload.students.map((s) => ({
+                full_name: `${s.first_name} ${s.last_name || ""}`.trim(),
+                email: s.email,
+                passport_number: s.passport_number,
+                date_of_birth: s.date_of_birth,
+                nationality: s.nationality,
+                institution_id: payload.institution_id,
+                status: 'ENROLLED',
+                student_id_number: s.student_id_number || `S${Math.floor(100000 + Math.random() * 900000)}`
+            }));
+
+            // Since our system relies on the auth users to login, students created this way won't have an auth login 
+            // until we link them, but they will exist in the system and cards can be issued.
+            // Wait, we can bulk insert them into `students` table.
+            const { data, error } = await supabase
+                .from("students")
+                .insert(mappedStudents)
+                .select();
+
+            if (error) throw error;
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["students"] });
+        },
+    });
+}
+

@@ -2,15 +2,12 @@ import { useState } from "react";
 import { Box, Typography, Button, Stack, Chip, Paper, alpha } from "@mui/material";
 import { useStudents } from "../../../hooks/useStudents";
 import { useInstitution } from "../../../hooks/useInstitutions";
-import { useIssueStudentCard } from "../../../hooks/useStudentCards";
 import { useBulkApproveStudents } from "../../../hooks/useVerification";
 import { DataTable } from "../../DataTable";
 import { StudentProfileDialog } from "../StudentProfileDialog";
-import type { Student } from "../../../types/database.types";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Close as ClearIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
-import { StudentCardDialog } from "../StudentCardDialog";
 
 interface StudentsTabProps {
     initialSearch?: string;
@@ -20,7 +17,6 @@ export function StudentsTab({ initialSearch = "" }: StudentsTabProps) {
     const location = useLocation();
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
-    const issueCard = useIssueStudentCard();
 
     // Extract institutionId from query params
     const queryParams = new URLSearchParams(location.search);
@@ -30,7 +26,6 @@ export function StudentsTab({ initialSearch = "" }: StudentsTabProps) {
     const { data: institution } = useInstitution(filterInstitutionId || '');
 
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-    const [cardStudentId, setCardStudentId] = useState<string | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     const { mutate: bulkApproveStudents, isPending: isBulkProcessing } = useBulkApproveStudents();
@@ -60,13 +55,13 @@ export function StudentsTab({ initialSearch = "" }: StudentsTabProps) {
         {
             id: "institution",
             label: "Institution",
-            render: (row: Student) => row.institution?.name || "N/A"
+            render: (row: any) => row.institution?.name || "N/A"
         },
         { id: "passport_number", label: "Passport" },
         {
             id: "verification",
             label: "Status",
-            render: (row: Student) => {
+            render: (row: any) => {
                 const status = (row.metadata as any)?.verification_status || 'PENDING';
                 let color: "warning" | "success" | "error" | "default" = "warning";
                 if (status === 'VERIFIED') color = "success";
@@ -81,15 +76,35 @@ export function StudentsTab({ initialSearch = "" }: StudentsTabProps) {
                 <Stack direction="row" spacing={1}>
                     <Button
                         size="small"
-                        variant="contained"
-                        disabled={(row.metadata as any)?.verification_status !== 'VERIFIED'}
+                        color="error"
+                        variant="outlined"
                         onClick={(e) => {
                             e.stopPropagation();
-                            issueCard.mutate(row.id, {
-                                onSuccess: () => enqueueSnackbar("Digital card issued successfully", { variant: "success" }),
-                                onError: (err: any) => enqueueSnackbar(err.message || "Failed to issue card", { variant: "error" })
-                            });
+                            enqueueSnackbar(`Formal warning sent to ${row.institution?.name || 'institution'} regarding student ${row.student_id_number}`, { variant: "warning" });
                         }}
+                    >
+                        Send Warning
+                    </Button>
+                    <Button
+                        size="small"
+                        color="error"
+                        variant="contained"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            enqueueSnackbar(`Student record ${row.student_id_number} has been flagged for review.`, { variant: "error" });
+                        }}
+                    >
+                        Flag Record
+                    </Button>
+                    <Button
+                        size="small"
+                        color="primary"
+                        variant="contained"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/students/${row.id}/issue-card`);
+                        }}
+                        sx={{ fontWeight: 800 }}
                     >
                         Issue Card
                     </Button>
@@ -98,10 +113,10 @@ export function StudentsTab({ initialSearch = "" }: StudentsTabProps) {
                         variant="outlined"
                         onClick={(e) => {
                             e.stopPropagation();
-                            setCardStudentId(row.id);
+                            setSelectedStudentId(row.id);
                         }}
                     >
-                        View Card
+                        View Profile
                     </Button>
                 </Stack>
             ),
@@ -197,12 +212,6 @@ export function StudentsTab({ initialSearch = "" }: StudentsTabProps) {
                 open={!!selectedStudentId}
                 studentId={selectedStudentId}
                 onClose={() => setSelectedStudentId(null)}
-            />
-
-            <StudentCardDialog
-                open={!!cardStudentId}
-                studentId={cardStudentId}
-                onClose={() => setCardStudentId(null)}
             />
         </Box>
     );

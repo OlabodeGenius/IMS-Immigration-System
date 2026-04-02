@@ -1,14 +1,20 @@
 import { useState } from "react";
-import { Box, Typography, TextField, Button, MenuItem, Paper, Autocomplete, Alert, Snackbar } from "@mui/material";
+import { Box, Typography, TextField, Button, MenuItem, Paper, Autocomplete, Alert, Snackbar, Stack, Divider } from "@mui/material";
+import { CloudUpload as UploadIcon } from "@mui/icons-material";
 import { useStudents } from "../../../hooks/useStudents";
 import { useProfile } from "../../../pages/useProfile";
 import { useCreateAttendance, useAttendanceRecords } from "../../../hooks/useAttendance";
 import { DataTable } from "../../DataTable";
-import type { Student } from "../../../types/database.types";
+import { AttendanceUploadModal } from "./AttendanceUploadModal";
+
+type Student = { id: string; full_name: string; student_id_number: string };
+
+
 
 export function AttendanceTab() {
     const { data: profile } = useProfile();
     const { data: students = [], isLoading: loadingStudents } = useStudents(profile?.institution_id || undefined);
+    const [uploadOpen, setUploadOpen] = useState(false);
 
     // Form State
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -50,8 +56,28 @@ export function AttendanceTab() {
     ];
 
     return (
-        <Box maxWidth="md">
-            <Typography variant="h6" mb={3}>Record Attendance</Typography>
+        <Box>
+            {/* Header */}
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+                <Box>
+                    <Typography variant="h5" fontWeight={900} color="#1E293B">Attendance</Typography>
+                    <Typography variant="body2" color="text.secondary" mt={0.5}>
+                        Record individual attendance or bulk-upload a CSV/Excel sheet.
+                    </Typography>
+                </Box>
+                <Button
+                    variant="contained"
+                    startIcon={<UploadIcon />}
+                    onClick={() => setUploadOpen(true)}
+                    sx={{ borderRadius: 2, fontWeight: 700, px: 3 }}
+                >
+                    Upload Attendance Sheet
+                </Button>
+            </Stack>
+
+            <Divider sx={{ mb: 4 }} />
+
+            <Typography variant="h6" mb={3} fontWeight={700} color="#1E293B">Log Single Record</Typography>
 
             <Paper sx={{ p: 3, mb: 4 }}>
                 <Box sx={{ display: 'grid', gap: 2 }}>
@@ -125,6 +151,12 @@ export function AttendanceTab() {
                 autoHideDuration={6000}
                 onClose={() => setSuccessMsg(null)}
                 message={successMsg}
+            />
+
+            <AttendanceUploadModal
+                open={uploadOpen}
+                onClose={() => setUploadOpen(false)}
+                institutionId={profile?.institution_id || undefined}
             />
         </Box>
     );

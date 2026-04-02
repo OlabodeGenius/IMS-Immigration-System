@@ -41,6 +41,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 fetchProfile(sessionUser.id);
             }
             setLoading(false);
+        }).catch((err) => {
+            console.warn("Auth session fetch error (offline?):", err);
+            if (mounted) setLoading(false);
         });
 
         const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {

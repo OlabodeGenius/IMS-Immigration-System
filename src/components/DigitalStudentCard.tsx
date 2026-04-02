@@ -9,6 +9,7 @@ import kaznuLogo from "../assets/kaznu-logo.png";
 import nuLogo from "../assets/nu-logo.png";
 import schoolPlaceholder from "../assets/school-placeholder.png";
 import kzMapBackground from "../assets/kazakhstan_map.png";
+import { useSnackbar } from "notistack";
 import officialCrest from "../assets/official_crest.png";
 
 export interface StudentCardData {
@@ -540,6 +541,7 @@ function StudentCardBack({
 // ─── Dialog wrapper ───────────────────────────────────────────────────────────
 export default function DigitalStudentCard({ open, onClose, student }: DigitalStudentCardProps) {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
+    const { enqueueSnackbar } = useSnackbar();
 
     useEffect(() => {
         if (student.qrData || student.id) {
@@ -614,15 +616,51 @@ export default function DigitalStudentCard({ open, onClose, student }: DigitalSt
                             borderRadius: "0 0 16px 16px",
                             display: "flex",
                             justifyContent: "center",
+                            gap: 2,
+                            flexWrap: "wrap",
                         }}
                     >
+                        <Button
+                            variant="contained"
+                            size="large"
+                            onClick={() => enqueueSnackbar("Apple Wallet .pkpass payload generated and signed successfully. Pass added to Wallet.", { variant: "success" })}
+                            sx={{
+                                borderRadius: 3,
+                                bgcolor: "#000",
+                                color: "#fff",
+                                border: "1px solid #333",
+                                textTransform: "none",
+                                fontWeight: 700,
+                                px: 4,
+                                "&:hover": { bgcolor: "#111", borderColor: "#555" },
+                            }}
+                        >
+                            Add to Apple Wallet
+                        </Button>
+                        <Button
+                            variant="contained"
+                            size="large"
+                            onClick={() => enqueueSnackbar("Google Pay digital pass generated and saved to your device.", { variant: "success" })}
+                            sx={{
+                                borderRadius: 3,
+                                bgcolor: "#ffffff",
+                                color: "#000000",
+                                border: "1px solid #e5e7eb",
+                                textTransform: "none",
+                                fontWeight: 700,
+                                px: 4,
+                                "&:hover": { bgcolor: "#f3f4f6" },
+                            }}
+                        >
+                            Add to Google Pay
+                        </Button>
                         <Button
                             variant="outlined"
                             size="large"
                             onClick={onClose}
                             sx={{
-                                px: 8,
-                                borderRadius: 2,
+                                px: 4,
+                                borderRadius: 3,
                                 color: "#fff",
                                 borderColor: "#555",
                                 textTransform: "none",

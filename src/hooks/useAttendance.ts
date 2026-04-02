@@ -1,13 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabaseClient";
-import type { AttendanceRecord, AttendanceStatus } from "../types/database.types";
+
+type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
+type AttendanceRecord = {
+    id: string;
+    student_id: string;
+    attendance_date: string;
+    status: AttendanceStatus;
+    notes: string | null;
+    created_at: string | null;
+    subject_code?: string | null;
+    subject_name?: string | null;
+};
+
 
 export type CreateAttendanceDTO = {
     student_id: string;
     attendance_date: string;
     status: AttendanceStatus;
     notes?: string;
+    subject_code?: string;
+    subject_name?: string;
 };
+
 
 // ===================================
 // Fetch Hooks

@@ -111,6 +111,7 @@ export default function SettingsPage() {
                                         >
                                             <MenuItem value="IMMIGRATION">Immigration Officer</MenuItem>
                                             <MenuItem value="INSTITUTION">University Admin</MenuItem>
+                                            <MenuItem value="STUDENT">Student</MenuItem>
                                         </Select>
                                     </FormControl>
                                 </Box>

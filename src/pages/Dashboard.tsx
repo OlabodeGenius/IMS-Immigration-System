@@ -1,4 +1,4 @@
-import { Container, Paper, Typography, Button, Box, Alert } from "@mui/material";
+import { Container, Paper, Typography, Button, Box, Alert, CircularProgress } from "@mui/material";
 import { useAuth } from "../auth/AuthProvider";
 import { useProfile } from "../profile/useProfile";
 import ImmigrationDashboard from "./ImmigrationDashboard";
@@ -8,6 +8,36 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { DashboardShell } from "../components/DashboardShell";
 import StudentProfilePage from "./StudentProfilePage";
+import { DocumentManager } from "../components/dashboard/institution/DocumentManager";
+import StudentVisaStatusTab from "../components/dashboard/student/StudentVisaStatusTab";
+import { useMyStudentProfile } from "../hooks/useStudents";
+
+function StudentDocumentsTab() {
+    const { data: student, isLoading } = useMyStudentProfile();
+
+    if (isLoading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    if (!student) {
+        return (
+            <Alert severity="warning" sx={{ borderRadius: 3 }}>
+                Unable to load your student profile. Please try again later.
+            </Alert>
+        );
+    }
+
+    return (
+        <Box>
+            <Typography variant="h5" fontWeight={900} sx={{ mb: 3 }}>Documents Hub</Typography>
+            <DocumentManager studentId={student.id} />
+        </Box>
+    );
+}
 
 export default function Dashboard() {
     const { user, signOut } = useAuth();
@@ -52,20 +82,9 @@ export default function Dashboard() {
                 {tab === "profile" ? (
                     <StudentProfilePage />
                 ) : tab === "visa" ? (
-                    <Box>
-                        <Typography variant="h5" fontWeight={900}>Visa Status</Typography>
-                        <Alert severity="info" sx={{ mt: 2, borderRadius: 3 }}>
-                            Detailed visa history and document tracking is coming soon.
-                            Use the Dashboard tab to view your current status.
-                        </Alert>
-                    </Box>
+                    <StudentVisaStatusTab />
                 ) : tab === "documents" ? (
-                    <Box>
-                        <Typography variant="h5" fontWeight={900}>Documents Hub</Typography>
-                        <Alert severity="info" sx={{ mt: 2, borderRadius: 3 }}>
-                            Your secure document vault is being initialized.
-                        </Alert>
-                    </Box>
+                    <StudentDocumentsTab />
                 ) : (
                     <StudentDashboard />
                 )}

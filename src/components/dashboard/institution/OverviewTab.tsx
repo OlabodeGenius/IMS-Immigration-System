@@ -52,7 +52,7 @@ export function OverviewTab({ institutionId }: OverviewTabProps) {
     const { data: metrics, isLoading: metricsLoading } = useInstitutionMetrics(institutionId);
     const { data: nationalityData, isLoading: nationalityLoading } = useStudentsByNationality(institutionId);
     const { data: programData, isLoading: programLoading } = useStudentsByProgram(institutionId);
-    const { data: presenceData, isLoading: presenceLoading } = usePresenceTrends(institutionId);
+    const { data: presenceData, isLoading: presenceLoading } = usePresenceTrends({ institutionId });
 
     return (
         <Box>

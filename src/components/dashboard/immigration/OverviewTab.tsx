@@ -7,12 +7,17 @@ import { ComplianceTable } from "./ComplianceTable";
 import { CriticalAlerts } from "./CriticalAlerts";
 import { useGlobalKPIs, usePresenceTrends } from "../../../hooks/useAnalytics";
 import { AttendanceTrendChart } from "../AttendanceTrendChart";
+import { InstitutionStudentsChart } from "./InstitutionStudentsChart";
+
+const CITIES = ["National", "Almaty", "Astana", "Shymkent", "Karaganda", "Aktobe", "Atyrau", "Pavlodar", "Oskemen", "Taraz"];
 
 export function OverviewTab() {
     const [locationTab, setLocationTab] = useState(0);
     const navigate = useNavigate();
-    const { data: kpis, isLoading, error } = useGlobalKPIs();
-    const { data: presenceData, isLoading: presenceLoading } = usePresenceTrends();
+    
+    const selectedCity = CITIES[locationTab];
+    const { data: kpis, isLoading, error } = useGlobalKPIs(selectedCity);
+    const { data: presenceData, isLoading: presenceLoading } = usePresenceTrends({ city: selectedCity });
 
     const handleLocationChange = (_event: React.SyntheticEvent, newValue: number) => {
         setLocationTab(newValue);
@@ -59,6 +64,7 @@ export function OverviewTab() {
                     <Button
                         variant="contained"
                         startIcon={<ReportIcon />}
+                        onClick={() => navigate("/dashboard?tab=reports")}
                         sx={{
                             borderRadius: '12px',
                             textTransform: 'none',
@@ -75,25 +81,30 @@ export function OverviewTab() {
 
             {/* Location Tabs */}
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
-                <Tabs value={locationTab} onChange={handleLocationChange} sx={{
-                    '& .MuiTab-root': {
-                        textTransform: 'none',
-                        fontWeight: 700,
-                        fontSize: '1rem',
-                        minWidth: 100,
-                        color: 'text.secondary',
-                        '&.Mui-selected': {
-                            color: 'primary.main'
+                <Tabs 
+                    value={locationTab} 
+                    onChange={handleLocationChange} 
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    sx={{
+                        '& .MuiTab-root': {
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            fontSize: '1rem',
+                            minWidth: 100,
+                            color: 'text.secondary',
+                            '&.Mui-selected': {
+                                color: 'primary.main'
+                            }
+                        },
+                        '& .MuiTabs-indicator': {
+                            height: 3,
+                            borderRadius: '3px 3px 0 0'
                         }
-                    },
-                    '& .MuiTabs-indicator': {
-                        height: 3,
-                        borderRadius: '3px 3px 0 0'
-                    }
-                }}>
-                    <Tab label="National" />
-                    <Tab label="Almaty" disabled />
-                    <Tab label="Astana" disabled />
+                    }}>
+                    {CITIES.map((city) => (
+                        <Tab key={city} label={city} />
+                    ))}
                 </Tabs>
             </Box>
 
@@ -149,7 +160,8 @@ export function OverviewTab() {
                                 height={250}
                             />
                         </Paper>
-                        <ComplianceTable />
+                        <InstitutionStudentsChart city={selectedCity} />
+                        <ComplianceTable city={selectedCity} />
                     </Stack>
                 </Grid>
                 <Grid size={{ xs: 12, lg: 4 }}>

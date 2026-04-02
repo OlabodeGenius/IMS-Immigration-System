@@ -127,16 +127,16 @@ export function useStudentsByProgram(institutionId?: string) {
     });
 }
 
-export function useAllComplianceMetrics() {
+export function useAllComplianceMetrics(city?: string) {
     return useQuery({
-        queryKey: ["all_compliance_metrics"],
+        queryKey: ["all_compliance_metrics", city],
         queryFn: async () => {
             const today = new Date().toISOString().split('T')[0];
             const nearingDate = new Date();
             nearingDate.setDate(nearingDate.getDate() + 30);
             const nearingStr = nearingDate.toISOString().split('T')[0];
 
-            const { data, error } = await supabase
+            let query = supabase
                 .from("institutions")
                 .select(`
                     id,
@@ -149,6 +149,12 @@ export function useAllComplianceMetrics() {
                         )
                     )
                 `);
+
+            if (city && city !== "National") {
+                query = query.eq('city', city);
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
 
@@ -224,39 +230,51 @@ export function useSystemCriticalAlerts() {
     });
 }
 
-export function useGlobalKPIs() {
+export function useGlobalKPIs(city?: string) {
     return useQuery({
-        queryKey: ["global_kpis"],
+        queryKey: ["global_kpis", city],
         queryFn: async () => {
-            const { count: totalStudents } = await supabase
-                .from("students")
-                .select("*", { count: 'exact', head: true });
+            let instIds: string[] = [];
 
-            const { count: activeVisas } = await supabase
-                .from("visas")
-                .select("*", { count: 'exact', head: true })
-                .eq("status", "ACTIVE");
+            if (city && city !== "National") {
+                const { data: insts } = await supabase.from('institutions').select('id').eq('city', city);
+                if (!insts || insts.length === 0) {
+                    return { total_students: 0, active_visas: 0, overdue_notifications: 0, high_risk_alerts: 0 };
+                }
+                instIds = insts.map(i => i.id);
+            }
+
+            let studentsQuery = supabase.from("students").select("id", { count: 'exact', head: true });
+            let visasQuery = supabase.from("visas").select("id, student:students!inner(institution_id)", { count: 'exact', head: true });
+            let overdueQuery = supabase.from("visas").select("id, student:students!inner(institution_id)", { count: 'exact', head: true });
+
+            if (instIds.length > 0) {
+                studentsQuery = studentsQuery.in("institution_id", instIds);
+                visasQuery = visasQuery.in("student.institution_id", instIds);
+                overdueQuery = overdueQuery.in("student.institution_id", instIds);
+            }
+
+            const [{ count: totalStudents }, { count: activeVisas }] = await Promise.all([
+                studentsQuery,
+                visasQuery.eq("status", "ACTIVE")
+            ]);
 
             const today = new Date().toISOString().split('T')[0];
-            const { count: overdueVisas } = await supabase
-                .from("visas")
-                .select("*", { count: 'exact', head: true })
-                .eq("status", "ACTIVE")
-                .lt("end_date", today);
+            const { count: overdueVisas } = await overdueQuery.eq("status", "ACTIVE").lt("end_date", today);
 
             return {
                 total_students: totalStudents || 0,
                 active_visas: activeVisas || 0,
                 overdue_notifications: overdueVisas || 0,
-                high_risk_alerts: 2 // Sample or calculated
+                high_risk_alerts: (overdueVisas || 0) > 0 ? Math.ceil((overdueVisas || 0) / 2) : 0
             };
         }
     });
 }
 
-export function usePresenceTrends(institutionId?: string) {
+export function usePresenceTrends(filter?: { institutionId?: string; city?: string }) {
     return useQuery({
-        queryKey: ["presence_trends", institutionId],
+        queryKey: ["presence_trends", filter?.institutionId, filter?.city],
         queryFn: async () => {
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -267,18 +285,28 @@ export function usePresenceTrends(institutionId?: string) {
                 .select("attendance_date, status")
                 .gte("attendance_date", dateStr);
 
-            if (institutionId) {
-                // To filter by institution, we'd ideally join with students
-                // attendance_records -> student_id -> institution_id
-                // Since Supabase doesn't support complex joins in a single .select() easily for aggregation, 
-                // we can filter using inner join syntax if we fetch everything.
+            let filterStudentIds: string[] | null = null;
+
+            if (filter?.institutionId) {
                 const { data: students } = await supabase
                     .from("students")
                     .select("id")
-                    .eq("institution_id", institutionId);
+                    .eq("institution_id", filter.institutionId);
+                filterStudentIds = students ? students.map(s => s.id) : [];
+            } else if (filter?.city && filter.city !== "National") {
+                const { data: insts } = await supabase.from('institutions').select('id').eq('city', filter.city);
+                if (insts && insts.length > 0) {
+                    const instIds = insts.map(i => i.id);
+                    const { data: students } = await supabase.from("students").select("id").in("institution_id", instIds);
+                    filterStudentIds = students ? students.map(s => s.id) : [];
+                } else {
+                    return [];
+                }
+            }
 
-                if (students && students.length > 0) {
-                    query = query.in("student_id", students.map(s => s.id));
+            if (filterStudentIds !== null) {
+                if (filterStudentIds.length > 0) {
+                    query = query.in("student_id", filterStudentIds);
                 } else {
                     return [];
                 }
@@ -298,10 +326,45 @@ export function usePresenceTrends(institutionId?: string) {
                 }
             });
 
+
             return Object.entries(dailyData).map(([date, counts]) => ({
                 date: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
                 rate: Math.round((counts.present / counts.total) * 100)
             }));
+        }
+    });
+}
+
+/**
+ * Fetches the total number of students grouped by institution.
+ * If a city is provided (and not "National"), only institutions in that city are included.
+ */
+export function useStudentsByInstitution(city?: string) {
+    return useQuery({
+        queryKey: ["students_by_institution", city],
+        queryFn: async () => {
+            let query = supabase
+                .from("institutions")
+                .select(`
+                    id,
+                    name,
+                    city,
+                    students ( id )
+                `);
+
+            if (city && city !== "National") {
+                query = query.eq("city", city);
+            }
+
+            const { data, error } = await query;
+            if (error) throw error;
+
+            return (data || [])
+                .map(inst => ({
+                    name: inst.name,
+                    students: Array.isArray(inst.students) ? inst.students.length : 0,
+                }))
+                .sort((a, b) => b.students - a.students);
         }
     });
 }

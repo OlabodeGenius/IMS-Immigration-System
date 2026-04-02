@@ -91,7 +91,7 @@ export function useMarkNotificationRead() {
 
     return useMutation({
         mutationFn: async (id: string) => {
-            if (id.startsWith('virtual-')) return; // Virtual ones can't be marked in DB
+            if (id.startsWith('virtual-') || id.startsWith('mock-')) return; // Virtual/mock ones can't be marked in DB
 
             const { error } = await supabase
                 .from("notifications")
