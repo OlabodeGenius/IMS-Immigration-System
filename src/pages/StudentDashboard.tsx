@@ -278,8 +278,8 @@ export default function StudentDashboard() {
                             {/* Attendance Component */}
                             <Paper sx={{ p: 4, borderRadius: 5, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                                 <Typography variant="h6" fontWeight={900} mb={3}>Attendance Goal</Typography>
-                                <Box sx={{ height: 260, width: '100%', position: 'relative', display: 'flex', justifyContent: 'center' }}>
-                                    <ResponsiveContainer width="99%" height="99%">
+                                <Box sx={{ height: 260, width: '100%', position: 'relative' }}>
+                                    <ResponsiveContainer width="100%" height={260}>
                                         <PieChart>
                                             <Pie
                                                 data={[
