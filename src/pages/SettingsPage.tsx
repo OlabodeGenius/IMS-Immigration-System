@@ -9,6 +9,7 @@ import {
     Email as EmailIcon,
     Shield as ShieldIcon
 } from "@mui/icons-material";
+import { supabase } from "../lib/supabaseClient";
 
 export default function SettingsPage() {
     const { profile, user } = useAuth();
@@ -24,11 +25,19 @@ export default function SettingsPage() {
 
     const handleSave = async () => {
         setIsLoading(true);
-        // Mock API call delay
-        await new Promise(r => setTimeout(r, 800));
-        enqueueSnackbar("Profile updated successfully", { variant: "success" });
+        if (user) {
+             const { error } = await supabase
+                 .from('profiles')
+                 .update({ full_name: formData.fullName })
+                 .eq('user_id', user.id);
+                 
+             if (error) {
+                 enqueueSnackbar("Failed to update profile: " + error.message, { variant: "error" });
+             } else {
+                 enqueueSnackbar("Profile updated successfully", { variant: "success" });
+             }
+        }
         setIsLoading(false);
-        navigate(-1);
     };
 
     return (

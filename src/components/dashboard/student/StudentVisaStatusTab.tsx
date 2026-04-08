@@ -22,7 +22,9 @@ import {
     Refresh as RefreshIcon,
 } from "@mui/icons-material";
 import { useMyStudentProfile } from "../../../hooks/useStudents";
-import { useVisaApplications } from "../../../hooks/useVisaApplications";
+import { useVisaApplications, useCreateVisaApplication } from "../../../hooks/useVisaApplications";
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
+import { useSnackbar } from "notistack";
 
 function getStatusColor(status: string) {
     switch (status?.toUpperCase()) {
@@ -60,6 +62,47 @@ function formatDate(dateStr: string) {
 export default function StudentVisaStatusTab() {
     const { data: student, isLoading, refetch } = useMyStudentProfile();
     const { data: applications = [] } = useVisaApplications();
+    const createVisaMutation = useCreateVisaApplication();
+    const { enqueueSnackbar } = useSnackbar();
+
+    // Dialog State
+    const [renewalOpen, setRenewalOpen] = useState(false);
+    const [renewalStart, setRenewalStart] = useState("");
+    const [renewalEnd, setRenewalEnd] = useState("");
+    const [submittingRenewal, setSubmittingRenewal] = useState(false);
+    
+    const handleSumbitRenewal = async () => {
+         if (!renewalStart || !renewalEnd) {
+             enqueueSnackbar("Please select both start and end dates.", { variant: "warning" });
+             return;
+         }
+         
+         if (!student?.institution_id) {
+             enqueueSnackbar("No institution linked to your profile.", { variant: "error" });
+             return;
+         }
+         
+         setSubmittingRenewal(true);
+         try {
+             await createVisaMutation.mutateAsync({
+                 student_id: student.id,
+                 institution_id: student.institution_id,
+                 application_type: "RENEWAL",
+                 status: "PENDING",
+                 requested_start_date: renewalStart,
+                 requested_end_date: renewalEnd,
+                 contract_scan_url: null,
+                 passport_scan_url: null,
+                 officer_notes: null
+             });
+             enqueueSnackbar("Renewal application submitted successfully!", { variant: "success" });
+             setRenewalOpen(false);
+         } catch (e: any) {
+             enqueueSnackbar(e.message || "Failed to submit application", { variant: "error" });
+         } finally {
+             setSubmittingRenewal(false);
+         }
+    };
 
     if (isLoading) {
         return (
@@ -125,9 +168,17 @@ export default function StudentVisaStatusTab() {
                 </Alert>
             )}
             {isExpiringSoon && (
-                <Alert severity="warning" sx={{ mb: 3, borderRadius: 3, fontWeight: 700 }}>
-                    Your visa expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}. Consider starting a renewal application.
-                </Alert>
+               <Alert 
+                   severity="warning" 
+                   sx={{ mb: 3, borderRadius: 3, fontWeight: 700 }}
+                   action={
+                       <Button color="inherit" size="small" variant="outlined" onClick={() => setRenewalOpen(true)}>
+                           Apply for Renewal
+                       </Button>
+                   }
+               >
+                   Your visa expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}. Consider starting a renewal application.
+               </Alert>
             )}
 
             {!currentVisa ? (
@@ -275,12 +326,24 @@ export default function StudentVisaStatusTab() {
                     </Grid>
 
                     {/* Renewal Applications */}
-                    {myApps.length > 0 && (
-                        <Grid size={{ xs: 12 }}>
-                            <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: "1px solid #E2E8F0" }}>
-                                <Typography variant="h6" fontWeight={900} color="#1E293B" sx={{ mb: 3 }}>
-                                    Renewal Applications
+                    <Grid size={{ xs: 12 }}>
+                        <Paper elevation={0} sx={{ p: 4, borderRadius: 4, border: "1px solid #E2E8F0" }}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+                                <Typography variant="h6" fontWeight={900} color="#1E293B">
+                                    Visa Applications
                                 </Typography>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    size="small"
+                                    onClick={() => setRenewalOpen(true)}
+                                    sx={{ borderRadius: 2, fontWeight: 700 }}
+                                >
+                                    Apply For Renewal
+                                </Button>
+                            </Stack>
+                            
+                            {myApps.length > 0 ? (
                                 <Stack spacing={2}>
                                     {myApps.map((app: any) => (
                                         <Paper
@@ -330,9 +393,13 @@ export default function StudentVisaStatusTab() {
                                         </Paper>
                                     ))}
                                 </Stack>
-                            </Paper>
-                        </Grid>
-                    )}
+                            ) : (
+                                <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
+                                    No visa applications submitted yet.
+                                </Typography>
+                            )}
+                        </Paper>
+                    </Grid>
 
                     {/* Visa History */}
                     <Grid size={{ xs: 12 }}>
@@ -379,6 +446,48 @@ export default function StudentVisaStatusTab() {
                     </Grid>
                 </Grid>
             )}
+            
+            {/* Renewal Dialog */}
+            <Dialog open={renewalOpen} onClose={() => setRenewalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ fontWeight: 800 }}>Visa Renewal Application</DialogTitle>
+                <DialogContent dividers>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Request a visa renewal by selecting your desired new start and end dates. Your institution's international office will review this request.
+                    </Typography>
+                    
+                    <Stack spacing={3}>
+                       <TextField
+                           label="Requested Start Date"
+                           type="date"
+                           fullWidth
+                           value={renewalStart}
+                           onChange={(e) => setRenewalStart(e.target.value)}
+                           InputLabelProps={{ shrink: true }}
+                       />
+                       <TextField
+                           label="Requested End Date"
+                           type="date"
+                           fullWidth
+                           value={renewalEnd}
+                           onChange={(e) => setRenewalEnd(e.target.value)}
+                           InputLabelProps={{ shrink: true }}
+                       />
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setRenewalOpen(false)} variant="text" color="inherit">
+                        Cancel
+                    </Button>
+                    <Button 
+                        onClick={handleSumbitRenewal} 
+                        variant="contained" 
+                        disabled={submittingRenewal || !renewalStart || !renewalEnd}
+                        startIcon={submittingRenewal ? <CircularProgress size={16} color="inherit" /> : null}
+                    >
+                        Submit Request
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }
