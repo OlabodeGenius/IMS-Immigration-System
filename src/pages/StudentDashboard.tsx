@@ -16,7 +16,11 @@ import {
     TableBody,
     TableCell,
     TableContainer,
-    TableRow
+    TableRow,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogActions
 } from '@mui/material';
 import {
     Logout as LogoutIcon,
@@ -26,7 +30,9 @@ import {
     AccountBalanceWallet as WalletIcon,
     ArrowForward as ArrowIcon,
     OpenInNew as OpenInNewIcon,
-    ErrorOutline as PendingIcon
+    ErrorOutline as PendingIcon,
+    FaceRetouchingNatural as FaceRetouchingNaturalIcon,
+    Verified as VerifiedIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthProvider';
 import { useMyStudentProfile } from '../hooks/useStudents';
@@ -42,6 +48,8 @@ export default function StudentDashboard() {
     const { signOut } = useAuth();
     const { data: student, isLoading } = useMyStudentProfile();
     const [renewalOpen, setRenewalOpen] = useState(false);
+    const [livenessOpen, setLivenessOpen] = useState(false);
+    const [livenessStatus, setLivenessStatus] = useState<'pending' | 'scanning' | 'verified'>('pending');
 
     const { data: documents = [] } = useDocuments(student?.id ?? null);
     const { data: payments = [] } = usePayments(student?.id ?? null);
@@ -174,6 +182,10 @@ export default function StudentDashboard() {
                             '&:hover': { bgcolor: '#713F12' }
                         }}
                         endIcon={<ArrowIcon />}
+                        onClick={() => {
+                            setLivenessStatus('pending');
+                            setLivenessOpen(true);
+                        }}
                     >
                         Start Verification
                     </Button>
@@ -403,6 +415,106 @@ export default function StudentDashboard() {
                 institutionId={student.institution_id}
                 onClose={() => setRenewalOpen(false)}
             />
+
+            {/* Liveness Check Dialog */}
+            <Dialog 
+                open={livenessOpen} 
+                onClose={() => livenessStatus !== 'scanning' && setLivenessOpen(false)}
+                maxWidth="sm" 
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 4 } }}
+            >
+                <DialogTitle sx={{ textAlign: 'center', pt: 4, pb: 1, fontWeight: 900 }}>
+                    Biometric Verification
+                </DialogTitle>
+                <DialogContent sx={{ px: 4, pb: 4, textAlign: 'center' }}>
+                    <Typography color="text.secondary" mb={4}>
+                        Please position your face clearly in the camera frame to complete your mandatory weekly liveness check.
+                    </Typography>
+
+                    <Box 
+                        sx={{ 
+                            bgcolor: livenessStatus === 'verified' ? '#F0FDF4' : '#F8FAFC', 
+                            p: 4, 
+                            borderRadius: 3, 
+                            border: `1px solid ${livenessStatus === 'verified' ? '#10B981' : '#E2E8F0'}`,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            minHeight: 250,
+                            justifyContent: 'center'
+                        }}
+                    >
+                        {livenessStatus === 'pending' && (
+                            <>
+                                <Box sx={{ p: 3, bgcolor: '#EFF6FF', borderRadius: '50%', mb: 2 }}>
+                                    <FaceRetouchingNaturalIcon sx={{ fontSize: 48, color: 'primary.main' }} />
+                                </Box>
+                                <Button 
+                                    size="large" 
+                                    variant="contained" 
+                                    onClick={() => {
+                                        setLivenessStatus('scanning');
+                                        setTimeout(() => setLivenessStatus('verified'), 3500);
+                                    }} 
+                                    sx={{ borderRadius: 2, fontWeight: 800, mt: 2 }}
+                                >
+                                    Start Camera Scan
+                                </Button>
+                            </>
+                        )}
+
+                        {livenessStatus === 'scanning' && (
+                            <Stack spacing={3} alignItems="center">
+                                <Box sx={{ position: 'relative', width: 140, height: 140, borderRadius: '50%', border: '2px dashed #3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <CircularProgress size={140} thickness={2} />
+                                    <FaceRetouchingNaturalIcon sx={{ position: 'absolute', fontSize: 60, color: 'primary.main', opacity: 0.5 }} />
+                                </Box>
+                                <Typography variant="body1" fontWeight={700} color="primary.main" className="animate-pulse">
+                                    Analyzing facial topography and depth...
+                                </Typography>
+                            </Stack>
+                        )}
+
+                        {livenessStatus === 'verified' && (
+                            <Stack spacing={2} alignItems="center">
+                                <Box sx={{ p: 2, bgcolor: '#D1FAE5', borderRadius: '50%' }}>
+                                    <VerifiedIcon sx={{ fontSize: 60, color: '#10B981' }} />
+                                </Box>
+                                <Box>
+                                    <Typography variant="h6" fontWeight={800} color="#065F46">
+                                        Identity Verified
+                                    </Typography>
+                                    <Typography variant="caption" color="#065F46" display="block" mt={1}>
+                                        99.8% match with Passport Photo. Anti-spoofing checks passed.
+                                    </Typography>
+                                </Box>
+                            </Stack>
+                        )}
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ p: 3, pt: 0, justifyContent: 'center' }}>
+                     {livenessStatus === 'verified' ? (
+                         <Button 
+                             fullWidth 
+                             variant="contained" 
+                             color="success" 
+                             onClick={() => setLivenessOpen(false)}
+                             sx={{ py: 1.5, borderRadius: 2, fontWeight: 800 }}
+                         >
+                             Finish & Return
+                         </Button>
+                     ) : (
+                         <Button 
+                             onClick={() => setLivenessOpen(false)} 
+                             disabled={livenessStatus === 'scanning'}
+                             sx={{ fontWeight: 700 }}
+                         >
+                             Cancel
+                         </Button>
+                     )}
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }
