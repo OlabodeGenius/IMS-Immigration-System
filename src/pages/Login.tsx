@@ -143,7 +143,7 @@ export default function Login() {
                                 autoComplete="email"
                                 error={!!errors.email}
                                 helperText={errors.email?.message}
-                                placeholder="admin@nu.edu.kz"
+                                placeholder="you@example.com"
                                 InputProps={{
                                     sx: { borderRadius: 2 },
                                 }}
@@ -211,28 +211,6 @@ export default function Login() {
                             >
                                 Sign up
                             </Link>
-                        </Typography>
-                    </Box>
-
-                    {/* Demo Credentials */}
-                    <Box
-                        sx={{
-                            mt: 4,
-                            p: 2,
-                            bgcolor: "grey.50",
-                            borderRadius: 2,
-                            border: "1px solid",
-                            borderColor: "divider",
-                        }}
-                    >
-                        <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" gutterBottom>
-                            Demo Credentials
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                            Immigration: immigration@test.kz / password123
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                            Institution: admin@nu.edu.kz / password123
                         </Typography>
                     </Box>
                 </Paper>
