@@ -14,7 +14,7 @@ export default function Onboarding() {
     useEffect(() => {
         supabase.auth.getSession().then(({ data }) => {
             if (data.session?.user) {
-                // If they already have a profile, send them to dashboard
+
                 supabase.from("profiles")
                     .select("user_id")
                     .eq("user_id", data.session.user.id)
@@ -24,7 +24,7 @@ export default function Onboarding() {
                             nav("/dashboard", { replace: true });
                         } else {
                             setChecking(false);
-                            // Pre-fill name if available in metadata
+
                             const metaName = data.session.user.user_metadata?.full_name;
                             if (metaName) setFullName(metaName);
                         }
@@ -68,7 +68,7 @@ export default function Onboarding() {
 
         // Add a slight delay for smooth UX
         setTimeout(() => {
-             nav("/dashboard", { replace: true });
+            nav("/dashboard", { replace: true });
         }, 500);
     };
 
@@ -81,29 +81,29 @@ export default function Onboarding() {
     }
 
     return (
-        <Box sx={{ 
-            minHeight: "100vh", 
-            display: "flex", 
+        <Box sx={{
+            minHeight: "100vh",
+            display: "flex",
             alignItems: "center",
             justifyContent: "center",
             bgcolor: "#f8fafc",
             py: 4,
         }}>
             <Container maxWidth="sm">
-                <Paper sx={{ 
-                    p: { xs: 4, md: 6 }, 
-                    borderRadius: 4, 
+                <Paper sx={{
+                    p: { xs: 4, md: 6 },
+                    borderRadius: 4,
                     boxShadow: "0 24px 64px -12px rgba(0,0,0,0.5)",
                     textAlign: "center"
                 }}>
                     <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
-                        <Box sx={{ 
-                            width: 64, 
-                            height: 64, 
-                            borderRadius: '50%', 
-                            bgcolor: '#EFF6FF', 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <Box sx={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: '50%',
+                            bgcolor: '#EFF6FF',
+                            display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'center',
                             color: '#2563EB'
                         }}>
@@ -125,12 +125,12 @@ export default function Onboarding() {
                     )}
 
                     <Stack spacing={3}>
-                        <TextField 
-                            label="Full Name" 
+                        <TextField
+                            label="Full Name"
                             variant="outlined"
                             fullWidth
-                            value={fullName} 
-                            onChange={(e) => setFullName(e.target.value)} 
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
                             placeholder="e.g. Alisher Ospanov"
                             sx={{
                                 '& .MuiOutlinedInput-root': {
@@ -142,16 +142,16 @@ export default function Onboarding() {
                             }}
                             autoFocus
                         />
-                        
-                        <Button 
-                            variant="contained" 
-                            onClick={createProfile} 
+
+                        <Button
+                            variant="contained"
+                            onClick={createProfile}
                             disabled={busy || !fullName.trim()}
                             fullWidth
                             size="large"
-                            sx={{ 
-                                py: 1.8, 
-                                borderRadius: 3, 
+                            sx={{
+                                py: 1.8,
+                                borderRadius: 3,
                                 fontWeight: 800,
                                 fontSize: "1.1rem",
                                 textTransform: "none",

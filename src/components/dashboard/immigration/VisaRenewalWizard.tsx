@@ -117,7 +117,7 @@ export function VisaRenewalWizard({ open, studentId, institutionId, onClose }: V
                             value={startDate}
                             onChange={e => setStartDate(e.target.value)}
                             fullWidth
-                            InputLabelProps={{ shrink: true }}
+                            slotProps={{ inputLabel: { shrink: true } }}
                             disabled={isUploading}
                         />
                         <TextField
@@ -126,7 +126,7 @@ export function VisaRenewalWizard({ open, studentId, institutionId, onClose }: V
                             value={endDate}
                             onChange={e => setEndDate(e.target.value)}
                             fullWidth
-                            InputLabelProps={{ shrink: true }}
+                            slotProps={{ inputLabel: { shrink: true } }}
                             disabled={isUploading}
                         />
                     </Stack>

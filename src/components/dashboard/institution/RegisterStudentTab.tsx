@@ -1,5 +1,5 @@
 import { Box, Typography, Paper, Alert } from "@mui/material";
-import { useProfile } from "../../../pages/useProfile";
+import { useProfile } from "../../../profile/useProfile";
 import { useCreateStudent } from "../../../hooks/useStudents";
 import { StudentForm } from "../../StudentForm";
 import { useNavigate } from "react-router-dom";

@@ -184,7 +184,7 @@ export function StudentForm({ onSubmit, isLoading = false, defaultValues }: Stud
                                             label="Date of Birth"
                                             type="date"
                                             fullWidth
-                                            InputLabelProps={{ shrink: true }}
+                                            slotProps={{ inputLabel: { shrink: true } }}
                                             error={!!errors.student?.date_of_birth}
                                             helperText={errors.student?.date_of_birth?.message}
                                         />
@@ -279,7 +279,7 @@ export function StudentForm({ onSubmit, isLoading = false, defaultValues }: Stud
                                     label="Start Date"
                                     type="date"
                                     fullWidth
-                                    InputLabelProps={{ shrink: true }}
+                                    slotProps={{ inputLabel: { shrink: true } }}
                                     error={!!errors.visa?.start_date}
                                     helperText={errors.visa?.start_date?.message}
                                 />
@@ -296,7 +296,7 @@ export function StudentForm({ onSubmit, isLoading = false, defaultValues }: Stud
                                     label="End Date"
                                     type="date"
                                     fullWidth
-                                    InputLabelProps={{ shrink: true }}
+                                    slotProps={{ inputLabel: { shrink: true } }}
                                     error={!!errors.visa?.end_date}
                                     helperText={errors.visa?.end_date?.message}
                                 />
@@ -309,10 +309,10 @@ export function StudentForm({ onSubmit, isLoading = false, defaultValues }: Stud
                     <Button
                         type="submit"
                         variant="contained"
-                        loading={isLoading}
+                        disabled={isLoading}
                         size="large"
                     >
-                        Register Student
+                        {isLoading ? 'Registering...' : 'Register Student'}
                     </Button>
                 </Box>
             </Box>

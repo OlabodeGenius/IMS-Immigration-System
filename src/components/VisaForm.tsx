@@ -90,7 +90,7 @@ export function VisaForm({ onSubmit, isLoading = false, defaultValues, isEditMod
                                     label="Start Date"
                                     type="date"
                                     fullWidth
-                                    InputLabelProps={{ shrink: true }}
+                                    slotProps={{ inputLabel: { shrink: true } }}
                                     error={!!errors.start_date}
                                     helperText={errors.start_date?.message}
                                 />
@@ -107,7 +107,7 @@ export function VisaForm({ onSubmit, isLoading = false, defaultValues, isEditMod
                                     label="End Date"
                                     type="date"
                                     fullWidth
-                                    InputLabelProps={{ shrink: true }}
+                                    slotProps={{ inputLabel: { shrink: true } }}
                                     error={!!errors.end_date}
                                     helperText={errors.end_date?.message}
                                 />
@@ -145,10 +145,10 @@ export function VisaForm({ onSubmit, isLoading = false, defaultValues, isEditMod
                     <Button
                         type="submit"
                         variant="contained"
-                        loading={isLoading}
                         size="large"
+                        disabled={isLoading}
                     >
-                        {isEditMode ? "Update Visa" : "Create Visa"}
+                        {isLoading ? 'Saving...' : (isEditMode ? 'Update Visa' : 'Create Visa')}
                     </Button>
                 </Box>
             </Box>

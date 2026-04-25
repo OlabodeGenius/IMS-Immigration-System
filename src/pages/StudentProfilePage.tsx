@@ -226,7 +226,7 @@ export default function StudentProfilePage() {
                                     onChange={handleChange}
                                     variant="outlined"
                                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F1F5F9' } }}
-                                    InputLabelProps={{ shrink: true }}
+                                    slotProps={{ inputLabel: { shrink: true } }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 12, md: 6 }}>
@@ -325,7 +325,7 @@ export default function StudentProfilePage() {
                                     type="date"
                                     variant="outlined"
                                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#F1F5F9' } }}
-                                    InputLabelProps={{ shrink: true }}
+                                    slotProps={{ inputLabel: { shrink: true } }}
                                 />
                             </Grid>
                         </Grid>

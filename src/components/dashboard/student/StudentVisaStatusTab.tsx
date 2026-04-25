@@ -462,7 +462,7 @@ export default function StudentVisaStatusTab() {
                            fullWidth
                            value={renewalStart}
                            onChange={(e) => setRenewalStart(e.target.value)}
-                           InputLabelProps={{ shrink: true }}
+                           slotProps={{ inputLabel: { shrink: true } }}
                        />
                        <TextField
                            label="Requested End Date"
@@ -470,7 +470,7 @@ export default function StudentVisaStatusTab() {
                            fullWidth
                            value={renewalEnd}
                            onChange={(e) => setRenewalEnd(e.target.value)}
-                           InputLabelProps={{ shrink: true }}
+                           slotProps={{ inputLabel: { shrink: true } }}
                        />
                     </Stack>
                 </DialogContent>

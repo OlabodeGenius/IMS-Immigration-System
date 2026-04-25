@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Box, Typography, TextField, Button, MenuItem, Paper, Autocomplete, Alert, Snackbar, Stack, Divider } from "@mui/material";
 import { CloudUpload as UploadIcon } from "@mui/icons-material";
 import { useStudents } from "../../../hooks/useStudents";
-import { useProfile } from "../../../pages/useProfile";
+import { useProfile } from "../../../profile/useProfile";
 import { useCreateAttendance, useAttendanceRecords } from "../../../hooks/useAttendance";
 import { DataTable } from "../../DataTable";
 import { AttendanceUploadModal } from "./AttendanceUploadModal";
@@ -95,7 +95,7 @@ export function AttendanceTab() {
                         label="Date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        InputLabelProps={{ shrink: true }}
+                        slotProps={{ inputLabel: { shrink: true } }}
                         required
                     />
 
