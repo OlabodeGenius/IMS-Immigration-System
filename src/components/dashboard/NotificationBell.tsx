@@ -20,7 +20,6 @@ import {
     Notifications as NotificationsIcon,
     NotificationsNone as EmptyBellIcon,
     Circle as CircleIcon,
-    Assignment as VisaIcon,
     CheckCircle as ApprovedIcon,
     Cancel as RejectedIcon,
     CreditCard as CardIcon,

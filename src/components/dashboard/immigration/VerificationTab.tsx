@@ -41,7 +41,7 @@ export function VerificationTab() {
         {
             id: "created_at",
             label: "Verified At",
-            render: (row: VerificationRequest) => new Date(row.created_at).toLocaleString()
+            render: (row: VerificationRequest) => row.created_at ? new Date(row.created_at).toLocaleString() : "—"
         },
     ];
 

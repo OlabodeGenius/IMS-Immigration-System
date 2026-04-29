@@ -17,7 +17,7 @@ export function InstitutionsTab() {
         { id: "institution_type", label: "Type" },
         { id: "license_number", label: "License #" },
         { id: "contact_email", label: "Email" },
-        { id: "created_at", label: "Registered On", render: (row: Institution) => new Date(row.created_at).toLocaleDateString() },
+        { id: "created_at", label: "Registered On", render: (row: Institution) => row.created_at ? new Date(row.created_at).toLocaleDateString() : "—" },
     ];
 
     const handleRowClick = (institutionId: string) => {

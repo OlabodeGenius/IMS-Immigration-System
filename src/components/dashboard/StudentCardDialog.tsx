@@ -25,7 +25,7 @@ import {
 } from "@mui/icons-material";
 import DigitalStudentCard from "../DigitalStudentCard";
 import { useStudentCard, useMintCardToken } from "../../hooks/useStudentCards";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 

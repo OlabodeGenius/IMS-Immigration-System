@@ -962,3 +962,25 @@ export const Constants = {
     },
   },
 } as const
+
+// ─── Convenience row types ────────────────────────────────────────────────────
+// Import from this file or from types/index.ts — both work.
+export type Institution = Database["public"]["Tables"]["institutions"]["Row"];
+export type Visa        = Database["public"]["Tables"]["visas"]["Row"];
+export type Student     = Database["public"]["Tables"]["students"]["Row"] & {
+    visa?: Visa | null;
+    institution?: Institution | null;
+    attendance?: Database["public"]["Tables"]["attendance_records"]["Row"][];
+};
+export type VerificationRequest = Database["public"]["Tables"]["verification_requests"]["Row"];
+export type Notification        = Database["public"]["Tables"]["notifications"]["Row"];
+
+// ─── VisaSchema (zod) ─────────────────────────────────────────────────────────
+import { z } from "zod";
+export const VisaSchema = z.object({
+    visa_type:    z.string().min(1, "Visa type is required"),
+    status:       z.enum(["ACTIVE", "EXPIRED", "CANCELLED", "REVOKED", "PENDING"]),
+    visa_number:  z.string().nullable().optional(),
+    start_date:   z.string().min(1, "Start date is required"),
+    end_date:     z.string().min(1, "End date is required"),
+});
