@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
     Box,
     Container,
@@ -38,7 +38,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { useMyStudentProfile } from '../hooks/useStudents';
 import { useDocuments } from '../hooks/useDocuments';
 import { usePayments } from '../hooks/usePayments';
-import { StudentCardFront } from '../components/DigitalStudentCard';
+import { StudentCardFront, StudentCardBack } from '../components/DigitalStudentCard';
+import QRCode from 'qrcode';
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from 'recharts';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { VisaRenewalWizard } from '../components/dashboard/immigration/VisaRenewalWizard';
@@ -50,6 +51,8 @@ export default function StudentDashboard() {
     const [renewalOpen, setRenewalOpen] = useState(false);
     const [livenessOpen, setLivenessOpen] = useState(false);
     const [livenessStatus, setLivenessStatus] = useState<'pending' | 'scanning' | 'verified'>('pending');
+    const [isFlipped, setIsFlipped] = useState(false);
+    const [qrCodeUrl, setQrCodeUrl] = useState('');
 
     const { data: documents = [] } = useDocuments(student?.id ?? null);
     const { data: payments = [] } = usePayments(student?.id ?? null);
@@ -74,7 +77,7 @@ export default function StudentDashboard() {
         return {
             id: student.id,
             schoolId: student.student_id_number || "—",
-            iin: student.passport_number || "—",
+            iin: (student as any).iin || student.passport_number || "—",
             fullName: student.full_name || "—",
             dateOfBirth: student.date_of_birth ? format(parseISO(student.date_of_birth), 'dd.MM.yyyy') : "—",
             sex: student.sex || "—",
@@ -87,9 +90,18 @@ export default function StudentDashboard() {
             dateOfExpiry: student.visa?.end_date ? format(parseISO(student.visa.end_date), 'dd.MM.yyyy') : "—",
             phoneNumber: student.phone || "—",
             cityRegion: student.institution?.city || "Almaty",
-            qrData: student.student_id_number
+            qrData: undefined,
         };
     }, [student]);
+
+    // ── Generate QR for card back ─────────────────────────────────────────────
+    useEffect(() => {
+        if (!student?.student_id_number) return;
+        QRCode.toDataURL(
+            `${window.location.origin}/verify?card=${student.student_id_number}`,
+            { width: 431, margin: 1, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } }
+        ).then(setQrCodeUrl).catch(console.error);
+    }, [student?.student_id_number]);
 
     if (isLoading) {
         return (
@@ -195,18 +207,117 @@ export default function StudentDashboard() {
                     {/* Left Column - Main Details */}
                     <Grid size={{ xs: 12, lg: 8 }}>
                         <Stack spacing={4}>
-                            {/* My Digital Card Preview */}
+                            {/* ── My Digital Card Preview (3D flip on click) ── */}
                             <Paper sx={{ p: 4, borderRadius: 5, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                                 <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
                                     <Typography variant="h6" fontWeight={900}>My Digital Identification</Typography>
-                                    <Chip label="OFFICIAL" size="small" sx={{ fontWeight: 800, bgcolor: '#F1F5F9', color: '#64748B' }} />
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                        <Chip label="OFFICIAL" size="small" sx={{ fontWeight: 800, bgcolor: '#F1F5F9', color: '#64748B' }} />
+                                        <Chip
+                                            label={isFlipped ? '← Front' : 'Back →'}
+                                            size="small"
+                                            clickable
+                                            onClick={(e) => { e.stopPropagation(); setIsFlipped(f => !f); }}
+                                            sx={{
+                                                fontWeight: 700,
+                                                bgcolor: isFlipped ? '#DBEAFE' : '#F0FDF4',
+                                                color: isFlipped ? '#1D4ED8' : '#166534',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s',
+                                            }}
+                                        />
+                                    </Stack>
                                 </Stack>
-                                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                                    {cardData && <StudentCardFront student={cardData} />}
-                                </Box>
-                                <Typography variant="caption" textAlign="center" display="block" color="text.secondary" sx={{ mt: 2 }}>
-                                    This is a persistent preview of your legal digital identification in the Republic of Kazakhstan.
-                                </Typography>
+
+                                {cardData && (
+                                    <>
+                                        {/*
+                                         * CSS 3D flip card pattern:
+                                         * - Outer box sets the perspective and the clipped display size (63% of 1013×638)
+                                         * - Inner box holds BOTH faces; it rotates as a unit
+                                         * - Each face is position:absolute at full 1013×638, then scale(0.63) from top-left
+                                         * - Back face gets an additional rotateY(180deg) so it starts hidden
+                                         * - The back face's marginLeft compensates for the scale+rotation offset
+                                         */}
+                                        <Box
+                                            onClick={() => setIsFlipped(f => !f)}
+                                            title={isFlipped ? 'Click to see front' : 'Click to see back'}
+                                            sx={{
+                                                width:  Math.round(1013 * 0.63),
+                                                height: Math.round(638  * 0.63),
+                                                mx: 'auto',
+                                                perspective: '2000px',
+                                                cursor: 'pointer',
+                                                userSelect: 'none',
+                                            }}
+                                        >
+                                            {/* Rotating inner container */}
+                                            <Box
+                                                sx={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    position: 'relative',
+                                                    transformStyle: 'preserve-3d',
+                                                    transition: 'transform 0.65s cubic-bezier(0.4, 0.2, 0.2, 1)',
+                                                    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                                                }}
+                                            >
+                                                {/* FRONT face */}
+                                                <Box
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        left: 0,
+                                                        width: 1013,
+                                                        height: 638,
+                                                        transformOrigin: 'top left',
+                                                        transform: 'scale(0.63)',
+                                                        backfaceVisibility: 'hidden',
+                                                        WebkitBackfaceVisibility: 'hidden',
+                                                        borderRadius: '18px',
+                                                        overflow: 'hidden',
+                                                        boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                                                    }}
+                                                >
+                                                    <StudentCardFront student={cardData} />
+                                                </Box>
+
+                                                {/* BACK face — pre-rotated 180° so it's hidden until flip */}
+                                                <Box
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        left: 0,
+                                                        width: 1013,
+                                                        height: 638,
+                                                        transformOrigin: 'top left',
+                                                        // scale first, then rotate; offset left by full width so it sits in place
+                                                        transform: `translateX(${Math.round(1013 * 0.63)}px) scale(0.63) rotateY(180deg)`,
+                                                        backfaceVisibility: 'hidden',
+                                                        WebkitBackfaceVisibility: 'hidden',
+                                                        borderRadius: '18px',
+                                                        overflow: 'hidden',
+                                                        boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                                                    }}
+                                                >
+                                                    <StudentCardBack student={cardData} qrCodeUrl={qrCodeUrl} />
+                                                </Box>
+                                            </Box>
+                                        </Box>
+
+                                        <Typography
+                                            variant="caption"
+                                            textAlign="center"
+                                            display="block"
+                                            color="text.secondary"
+                                            sx={{ mt: 2, transition: 'opacity 0.3s' }}
+                                        >
+                                            {isFlipped
+                                                ? 'Back of card — scan the QR code to verify this ID online.'
+                                                : 'Click the card or tap "Back →" to flip and see the QR code.'}
+                                        </Typography>
+                                    </>
+                                )}
                             </Paper>
 
                             {/* Visa Detail Table */}
