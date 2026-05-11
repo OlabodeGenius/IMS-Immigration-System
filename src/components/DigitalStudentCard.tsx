@@ -348,7 +348,7 @@ export function StudentCardFront({ student }: { student: StudentCardData }) {
 }
 
 // ─── CARD BACK (1013 × 638 px) ───────────────────────────────────────────────
-function StudentCardBack({
+export function StudentCardBack({
     student,
     qrCodeUrl,
 }: {
