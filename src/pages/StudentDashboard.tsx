@@ -17,10 +17,7 @@ import {
     TableCell,
     TableContainer,
     TableRow,
-    Dialog,
-    DialogContent,
-    DialogTitle,
-    DialogActions
+    Tooltip,
 } from '@mui/material';
 import {
     Logout as LogoutIcon,
@@ -40,19 +37,33 @@ import { useDocuments } from '../hooks/useDocuments';
 import { usePayments } from '../hooks/usePayments';
 import { StudentCardFront, StudentCardBack } from '../components/DigitalStudentCard';
 import QRCode from 'qrcode';
+import LivenessCheckModal from '../components/LivenessCheckModal';
+import { toPng } from 'html-to-image';
+import { jsPDF } from 'jspdf';
 import { PieChart, Pie, Cell, ResponsiveContainer, Label } from 'recharts';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { VisaRenewalWizard } from '../components/dashboard/immigration/VisaRenewalWizard';
+import { useThemeMode } from '../theme/ThemeContext';
+import { usePushSubscription } from '../hooks/usePushSubscription';
+import AttendanceDetailModal from '../components/dashboard/student/AttendanceDetailModal';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
 
 
 export default function StudentDashboard() {
     const { signOut } = useAuth();
     const { data: student, isLoading } = useMyStudentProfile();
+    const { mode, toggleMode } = useThemeMode();
+    const { isSupported: pushSupported, isSubscribed: pushSubscribed, isLoading: pushLoading, subscribe: subscribePush, unsubscribe: unsubscribePush } = usePushSubscription();
     const [renewalOpen, setRenewalOpen] = useState(false);
     const [livenessOpen, setLivenessOpen] = useState(false);
     const [livenessStatus, setLivenessStatus] = useState<'pending' | 'scanning' | 'verified'>('pending');
     const [isFlipped, setIsFlipped] = useState(false);
     const [qrCodeUrl, setQrCodeUrl] = useState('');
+    const [isExportingPdf, setIsExportingPdf] = useState(false);
+    const [attendanceOpen, setAttendanceOpen] = useState(false);
 
     const { data: documents = [] } = useDocuments(student?.id ?? null);
     const { data: payments = [] } = usePayments(student?.id ?? null);
@@ -103,6 +114,24 @@ export default function StudentDashboard() {
         ).then(setQrCodeUrl).catch(console.error);
     }, [student?.student_id_number]);
 
+    // ── PDF Download — captures both card faces ───────────────────────────────
+    const downloadIdPdf = async () => {
+        setIsExportingPdf(true);
+        try {
+            const frontEl = document.getElementById('student-card-front');
+            const backEl  = document.getElementById('student-card-back');
+            if (!frontEl || !backEl) return;
+            const opts = { quality: 1, pixelRatio: 3, backgroundColor: '#ffffff', fetchRequestInit: { cache: 'no-cache' as RequestCache } };
+            const [frontUrl, backUrl] = await Promise.all([toPng(frontEl, opts), toPng(backEl, opts)]);
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [85.6, 54] });
+            pdf.addImage(frontUrl, 'PNG', 0, 0, 85.6, 54);
+            pdf.addPage([85.6, 54], 'landscape');
+            pdf.addImage(backUrl, 'PNG', 0, 0, 85.6, 54);
+            pdf.save(`student-id-${student?.student_id_number || 'card'}.pdf`);
+        } catch (e) { console.error('PDF export failed', e); }
+        finally { setIsExportingPdf(false); }
+    };
+
     if (isLoading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', bgcolor: '#f8fafc' }}>
@@ -152,7 +181,26 @@ export default function StudentDashboard() {
                                 <Typography variant="h5" fontWeight={900} color="#1E293B">{attendancePercent}%</Typography>
                             </Box>
                             <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' } }} />
-                            <IconButton onClick={signOut} sx={{ bgcolor: '#F1F5F9', '&:hover': { bgcolor: '#E2E8F0' } }}>
+                            {/* Dark mode toggle */}
+                            <Tooltip title={mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+                                <IconButton onClick={toggleMode} sx={{ bgcolor: 'action.hover' }}>
+                                    {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+                                </IconButton>
+                            </Tooltip>
+                            {/* Push notification subscribe */}
+                            {pushSupported && (
+                                <Tooltip title={pushSubscribed ? 'Disable Push Notifications' : 'Enable Push Notifications'}>
+                                    <IconButton
+                                        onClick={pushSubscribed ? unsubscribePush : subscribePush}
+                                        disabled={pushLoading}
+                                        sx={{ bgcolor: 'action.hover' }}
+                                    >
+                                        {pushSubscribed ? <NotificationsOffIcon /> : <NotificationsIcon />}
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                            {/* Sign out */}
+                            <IconButton onClick={signOut} sx={{ bgcolor: 'action.hover' }}>
                                 <LogoutIcon color="action" />
                             </IconButton>
                         </Stack>
@@ -316,6 +364,17 @@ export default function StudentDashboard() {
                                                 ? 'Back of card — scan the QR code to verify this ID online.'
                                                 : 'Click the card or tap "Back →" to flip and see the QR code.'}
                                         </Typography>
+
+                                        {/* ── Download My ID button ────── */}
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            disabled={isExportingPdf}
+                                            onClick={downloadIdPdf}
+                                            sx={{ mt: 1.5, borderRadius: 2, fontWeight: 700, fontSize: '0.78rem', px: 3 }}
+                                        >
+                                            {isExportingPdf ? 'Generating PDF…' : '⬇ Download My ID (PDF)'}
+                                        </Button>
                                     </>
                                 )}
                             </Paper>
@@ -388,8 +447,17 @@ export default function StudentDashboard() {
                         <Stack spacing={4}>
                             {/* Attendance Component */}
                             <Paper sx={{ p: 4, borderRadius: 5, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                                <Typography variant="h6" fontWeight={900} mb={3}>Attendance Goal</Typography>
-                                <Box sx={{ height: 260, width: '100%', position: 'relative' }}>
+                                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+                                    <Typography variant="h6" fontWeight={900}>Attendance Goal</Typography>
+                                    <Button size="small" onClick={() => setAttendanceOpen(true)} sx={{ fontWeight: 700, fontSize: '0.75rem' }}>
+                                        View Details
+                                    </Button>
+                                </Stack>
+                                <Box
+                                    sx={{ height: 260, width: '100%', position: 'relative', cursor: 'pointer' }}
+                                    onClick={() => setAttendanceOpen(true)}
+                                    title="Click to view attendance breakdown"
+                                >
                                     <ResponsiveContainer width="100%" height={260}>
                                         <PieChart>
                                             <Pie
@@ -527,105 +595,23 @@ export default function StudentDashboard() {
                 onClose={() => setRenewalOpen(false)}
             />
 
-            {/* Liveness Check Dialog */}
-            <Dialog 
-                open={livenessOpen} 
-                onClose={() => livenessStatus !== 'scanning' && setLivenessOpen(false)}
-                maxWidth="sm" 
-                fullWidth
-                PaperProps={{ sx: { borderRadius: 4 } }}
-            >
-                <DialogTitle sx={{ textAlign: 'center', pt: 4, pb: 1, fontWeight: 900 }}>
-                    Biometric Verification
-                </DialogTitle>
-                <DialogContent sx={{ px: 4, pb: 4, textAlign: 'center' }}>
-                    <Typography color="text.secondary" mb={4}>
-                        Please position your face clearly in the camera frame to complete your mandatory weekly liveness check.
-                    </Typography>
+            {/* ── Real Biometric Liveness Modal ── */}
+            <LivenessCheckModal
+                open={livenessOpen}
+                onClose={() => setLivenessOpen(false)}
+                onSuccess={() => {
+                    setLivenessStatus('verified');
+                    setLivenessOpen(false);
+                }}
+            />
 
-                    <Box 
-                        sx={{ 
-                            bgcolor: livenessStatus === 'verified' ? '#F0FDF4' : '#F8FAFC', 
-                            p: 4, 
-                            borderRadius: 3, 
-                            border: `1px solid ${livenessStatus === 'verified' ? '#10B981' : '#E2E8F0'}`,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            minHeight: 250,
-                            justifyContent: 'center'
-                        }}
-                    >
-                        {livenessStatus === 'pending' && (
-                            <>
-                                <Box sx={{ p: 3, bgcolor: '#EFF6FF', borderRadius: '50%', mb: 2 }}>
-                                    <FaceRetouchingNaturalIcon sx={{ fontSize: 48, color: 'primary.main' }} />
-                                </Box>
-                                <Button 
-                                    size="large" 
-                                    variant="contained" 
-                                    onClick={() => {
-                                        setLivenessStatus('scanning');
-                                        setTimeout(() => setLivenessStatus('verified'), 3500);
-                                    }} 
-                                    sx={{ borderRadius: 2, fontWeight: 800, mt: 2 }}
-                                >
-                                    Start Camera Scan
-                                </Button>
-                            </>
-                        )}
-
-                        {livenessStatus === 'scanning' && (
-                            <Stack spacing={3} alignItems="center">
-                                <Box sx={{ position: 'relative', width: 140, height: 140, borderRadius: '50%', border: '2px dashed #3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <CircularProgress size={140} thickness={2} />
-                                    <FaceRetouchingNaturalIcon sx={{ position: 'absolute', fontSize: 60, color: 'primary.main', opacity: 0.5 }} />
-                                </Box>
-                                <Typography variant="body1" fontWeight={700} color="primary.main" className="animate-pulse">
-                                    Analyzing facial topography and depth...
-                                </Typography>
-                            </Stack>
-                        )}
-
-                        {livenessStatus === 'verified' && (
-                            <Stack spacing={2} alignItems="center">
-                                <Box sx={{ p: 2, bgcolor: '#D1FAE5', borderRadius: '50%' }}>
-                                    <VerifiedIcon sx={{ fontSize: 60, color: '#10B981' }} />
-                                </Box>
-                                <Box>
-                                    <Typography variant="h6" fontWeight={800} color="#065F46">
-                                        Identity Verified
-                                    </Typography>
-                                    <Typography variant="caption" color="#065F46" display="block" mt={1}>
-                                        99.8% match with Passport Photo. Anti-spoofing checks passed.
-                                    </Typography>
-                                </Box>
-                            </Stack>
-                        )}
-                    </Box>
-                </DialogContent>
-                <DialogActions sx={{ p: 3, pt: 0, justifyContent: 'center' }}>
-                     {livenessStatus === 'verified' ? (
-                         <Button 
-                             fullWidth 
-                             variant="contained" 
-                             color="success" 
-                             onClick={() => setLivenessOpen(false)}
-                             sx={{ py: 1.5, borderRadius: 2, fontWeight: 800 }}
-                         >
-                             Finish & Return
-                         </Button>
-                     ) : (
-                         <Button 
-                             onClick={() => setLivenessOpen(false)} 
-                             disabled={livenessStatus === 'scanning'}
-                             sx={{ fontWeight: 700 }}
-                         >
-                             Cancel
-                         </Button>
-                     )}
-                </DialogActions>
-            </Dialog>
+            {/* ── Attendance Detail Modal ── */}
+            <AttendanceDetailModal
+                open={attendanceOpen}
+                onClose={() => setAttendanceOpen(false)}
+                attendance={student.attendance || []}
+                studentName={student.full_name || ''}
+            />
         </Box>
     );
 }

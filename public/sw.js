@@ -98,3 +98,33 @@ self.addEventListener('fetch', event => {
         fetch(request).catch(() => caches.match(request))
     );
 });
+
+// ── Web Push: show notification when server sends a push event ────────────────
+self.addEventListener('push', event => {
+    let data = { title: 'IMS Alert', body: 'You have a new notification.', icon: '/icon-192.png' };
+    try { if (event.data) data = { ...data, ...event.data.json() }; } catch {}
+
+    event.waitUntil(
+        self.registration.showNotification(data.title, {
+            body:  data.body,
+            icon:  data.icon || '/icon-192.png',
+            badge: '/icon-192.png',
+            tag:   'ims-notification',
+            renotify: true,
+            data:  { url: data.url || '/' },
+        })
+    );
+});
+
+// ── Open app when notification is clicked ─────────────────────────────────────
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+    const target = event.notification.data?.url || '/';
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+            const existing = clients.find(c => c.url.includes(self.location.origin));
+            if (existing) { existing.focus(); existing.navigate(target); }
+            else self.clients.openWindow(target);
+        })
+    );
+});
