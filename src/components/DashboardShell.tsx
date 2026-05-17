@@ -230,14 +230,8 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
                                 <ListItemText primary="Settings" sx={{ '& .MuiTypography-root': { fontWeight: 500, fontSize: '0.9rem' } }} />
                             </ListItemButton>
                         </ListItem>
-                        <ListItem disablePadding sx={{ display: 'block', mb: 0.5 }}>
-                            <ListItemButton onClick={() => window.open('https://help.ims.kz', '_blank')} sx={{ borderRadius: 2, px: 2, color: '#64748B' }}>
-                                <ListItemIcon sx={{ minWidth: 0, mr: 2, color: 'inherit' }}>
-                                    <VerifyIcon sx={{ fontSize: 20 }} />
-                                </ListItemIcon>
-                                <ListItemText primary="Help Center" sx={{ '& .MuiTypography-root': { fontWeight: 500, fontSize: '0.9rem' } }} />
-                            </ListItemButton>
-                        </ListItem>
+
+
                         <ListItem disablePadding sx={{ display: 'block' }}>
                             <ListItemButton
                                 onClick={signOut}
