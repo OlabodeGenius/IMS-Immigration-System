@@ -3,9 +3,12 @@ import { Box, Button, Container, Paper, Stack, TextField, Typography, CircularPr
 import { supabase } from "../lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { PersonAdd as PersonAddIcon } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 export default function Onboarding() {
     const nav = useNavigate();
+    const { t } = useTranslation();
     const [fullName, setFullName] = useState("");
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -88,7 +91,13 @@ export default function Onboarding() {
             justifyContent: "center",
             bgcolor: "#f8fafc",
             py: 4,
+            position: "relative",
         }}>
+            {/* Language switcher – top right */}
+            <Box sx={{ position: "absolute", top: 16, right: 24 }}>
+                <LanguageSwitcher compact />
+            </Box>
+
             <Container maxWidth="sm">
                 <Paper sx={{
                     p: { xs: 4, md: 6 },
@@ -112,10 +121,10 @@ export default function Onboarding() {
                     </Box>
 
                     <Typography variant="h4" fontWeight={900} color="#0F172A" sx={{ fontFamily: 'Outfit', mb: 1 }}>
-                        Complete Your Setup
+                        {t('onboarding.title')}
                     </Typography>
                     <Typography variant="body1" color="#64748B" sx={{ mb: 4 }}>
-                        Welcome to IMS. Please provide your full name to set up your account profile.
+                        {t('onboarding.subtitle')}
                     </Typography>
 
                     {error && (
@@ -126,7 +135,7 @@ export default function Onboarding() {
 
                     <Stack spacing={3}>
                         <TextField
-                            label="Full Name"
+                            label={t('onboarding.firstNameLabel')}
                             variant="outlined"
                             fullWidth
                             value={fullName}
@@ -158,7 +167,7 @@ export default function Onboarding() {
                                 boxShadow: "0 8px 24px rgba(37,99,235,0.25)"
                             }}
                         >
-                            {busy ? <CircularProgress size={24} color="inherit" /> : "Continue to Dashboard"}
+                            {busy ? <CircularProgress size={24} color="inherit" /> : t('onboarding.finish')}
                         </Button>
                     </Stack>
                 </Paper>

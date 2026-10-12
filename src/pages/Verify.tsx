@@ -16,7 +16,6 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import ShieldIcon from "@mui/icons-material/Shield";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
-import { supabase } from "../lib/supabaseClient";
 
 type VerifyResult =
     | {

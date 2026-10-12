@@ -11,8 +11,12 @@ import {
     Stack,
     alpha,
     useTheme,
-    Button
+    Button,
+    Menu,
+    MenuItem,
+    IconButton
 } from '@mui/material';
+import { Translate as TranslateIcon } from '@mui/icons-material';
 import {
     Dashboard as DashboardIcon,
     People as PeopleIcon,
@@ -38,38 +42,42 @@ interface DashboardShellProps {
     title?: string;
 }
 
+import { useTranslation } from 'react-i18next';
+
 export function DashboardShell({ children, title }: DashboardShellProps) {
     const theme = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
     const { profile, signOut } = useAuth();
     const { data: institution } = useInstitution(profile?.institution_id || '');
+    const { t, i18n } = useTranslation();
 
     const [searchInput, setSearchInput] = React.useState("");
+    const [langAnchorEl, setLangAnchorEl] = React.useState<null | HTMLElement>(null);
 
     const isImmigration = profile?.role === 'IMMIGRATION';
     const isStudent = profile?.role === 'STUDENT';
 
     const menuItems = isImmigration ? [
-        { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard?tab=overview' },
-        { text: 'Students', icon: <PeopleIcon />, path: '/dashboard?tab=students' },
+        { text: t('nav.dashboard'), icon: <DashboardIcon />, path: '/dashboard?tab=overview' },
+        { text: t('nav.students'), icon: <PeopleIcon />, path: '/dashboard?tab=students' },
         { text: 'Universities', icon: <BusinessIcon />, path: '/dashboard?tab=institutions' },
-        { text: 'Reports', icon: <AssessmentIcon />, path: '/dashboard?tab=reports' },
+        { text: t('nav.analytics'), icon: <AssessmentIcon />, path: '/dashboard?tab=reports' },
         { text: 'Alerts', icon: <NotificationsIcon />, path: '/dashboard?tab=alerts' },
-        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+        { text: t('nav.settings'), icon: <SettingsIcon />, path: '/settings' },
     ] : isStudent ? [
-        { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+        { text: t('nav.dashboard'), icon: <DashboardIcon />, path: '/dashboard' },
         { text: 'Profile', icon: <PeopleIcon />, path: '/dashboard?tab=profile' },
         { text: 'Visa Status', icon: <VerifyIcon />, path: '/dashboard?tab=visa' },
-        { text: 'Documents', icon: <AssessmentIcon />, path: '/dashboard?tab=documents' },
-        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+        { text: t('nav.documents'), icon: <AssessmentIcon />, path: '/dashboard?tab=documents' },
+        { text: t('nav.settings'), icon: <SettingsIcon />, path: '/settings' },
     ] : [
         { text: 'Overview', icon: <DashboardIcon />, path: '/dashboard' },
-        { text: 'Students', icon: <PeopleIcon />, path: '/dashboard?tab=students' },
+        { text: t('nav.students'), icon: <PeopleIcon />, path: '/dashboard?tab=students' },
         { text: 'Register Student', icon: <PersonAddIcon />, path: '/dashboard?tab=register' },
         { text: 'Attendance', icon: <VerifyIcon />, path: '/dashboard?tab=attendance' },
         { text: 'Alerts', icon: <NotificationsIcon />, path: '/dashboard?tab=alerts' },
-        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+        { text: t('nav.settings'), icon: <SettingsIcon />, path: '/settings' },
     ];
 
     // Helper to get initials
@@ -331,6 +339,27 @@ export function DashboardShell({ children, title }: DashboardShellProps) {
 
                     {/* Right Profile Section */}
                     <Stack direction="row" spacing={3} alignItems="center" sx={{ ml: 4 }}>
+                        <Box>
+                            <IconButton onClick={(e) => setLangAnchorEl(e.currentTarget)} sx={{ bgcolor: '#F1F5F9', '&:hover': { bgcolor: '#E2E8F0' } }}>
+                                <TranslateIcon fontSize="small" sx={{ color: '#64748B' }} />
+                                <Typography variant="caption" fontWeight={800} color="#1E293B" sx={{ ml: 1, textTransform: 'uppercase' }}>
+                                    {i18n.language.substring(0, 2)}
+                                </Typography>
+                            </IconButton>
+                            <Menu
+                                anchorEl={langAnchorEl}
+                                open={Boolean(langAnchorEl)}
+                                onClose={() => setLangAnchorEl(null)}
+                                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                                PaperProps={{ sx: { mt: 1, borderRadius: 2, minWidth: 120, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' } }}
+                            >
+                                <MenuItem onClick={() => { i18n.changeLanguage('en'); setLangAnchorEl(null); }} selected={i18n.language.startsWith('en')} sx={{ fontWeight: 600, fontSize: '0.9rem' }}>English (EN)</MenuItem>
+                                <MenuItem onClick={() => { i18n.changeLanguage('ru'); setLangAnchorEl(null); }} selected={i18n.language.startsWith('ru')} sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Русский (RU)</MenuItem>
+                                <MenuItem onClick={() => { i18n.changeLanguage('kk'); setLangAnchorEl(null); }} selected={i18n.language.startsWith('kk')} sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Қазақша (KK)</MenuItem>
+                            </Menu>
+                        </Box>
+
                         <NotificationBell />
 
                         <Box sx={{ width: '1px', height: 32, bgcolor: '#E2E8F0' }} />

@@ -28,8 +28,6 @@ import {
     ArrowForward as ArrowIcon,
     OpenInNew as OpenInNewIcon,
     ErrorOutline as PendingIcon,
-    FaceRetouchingNatural as FaceRetouchingNaturalIcon,
-    Verified as VerifiedIcon
 } from '@mui/icons-material';
 import { useAuth } from '../auth/AuthProvider';
 import { useMyStudentProfile } from '../hooks/useStudents';
@@ -50,69 +48,104 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
-
+import { useTranslation } from 'react-i18next';
+import { MessagesTab } from '../components/dashboard/shared/MessagesTab';
+import { Tabs, Tab, Alert } from '@mui/material';
+import { getStudentProfile } from '../lib/offlineDB';
 
 export default function StudentDashboard() {
+    const { t } = useTranslation();
     const { signOut } = useAuth();
     const { data: student, isLoading } = useMyStudentProfile();
     const { mode, toggleMode } = useThemeMode();
     const { isSupported: pushSupported, isSubscribed: pushSubscribed, isLoading: pushLoading, subscribe: subscribePush, unsubscribe: unsubscribePush } = usePushSubscription();
     const [renewalOpen, setRenewalOpen] = useState(false);
     const [livenessOpen, setLivenessOpen] = useState(false);
-    const [livenessStatus, setLivenessStatus] = useState<'pending' | 'scanning' | 'verified'>('pending');
+    const [_livenessStatus, setLivenessStatus] = useState<'pending' | 'scanning' | 'verified'>('pending');
     const [isFlipped, setIsFlipped] = useState(false);
+    const [tabValue, setTabValue] = useState(0);
     const [qrCodeUrl, setQrCodeUrl] = useState('');
     const [isExportingPdf, setIsExportingPdf] = useState(false);
     const [attendanceOpen, setAttendanceOpen] = useState(false);
+    const [offlineStudent, setOfflineStudent] = useState<any>(null);
+    const [isOffline, setIsOffline] = useState(false);
 
-    const { data: documents = [] } = useDocuments(student?.id ?? null);
-    const { data: payments = [] } = usePayments(student?.id ?? null);
+    // ── Offline fallback: load from IndexedDB if network fetch fails ──
+    useEffect(() => {
+        const handleOffline = () => setIsOffline(true);
+        const handleOnline = () => setIsOffline(false);
+        window.addEventListener('offline', handleOffline);
+        window.addEventListener('online', handleOnline);
+        setIsOffline(!navigator.onLine);
+        return () => {
+            window.removeEventListener('offline', handleOffline);
+            window.removeEventListener('online', handleOnline);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!student && !isLoading) {
+            // Network fetch failed or we're offline — try IndexedDB cache
+            getStudentProfile<any>().then(cached => {
+                if (cached?.data) setOfflineStudent(cached.data);
+            });
+        } else if (student) {
+            // Online and we have fresh data — clear stale offline state
+            setOfflineStudent(null);
+        }
+    }, [student, isLoading]);
+
+    // Use live data if available, fall back to cached offline data
+    const effectiveStudent = student || offlineStudent;
+
+    const { data: documents = [] } = useDocuments(effectiveStudent?.id ?? null);
+    const { data: payments = [] } = usePayments(effectiveStudent?.id ?? null);
 
     const attendancePercent = useMemo(() => {
-        if (!student?.attendance || student.attendance.length === 0) return 85; // Mocking better default for visual
-        const presentCount = student.attendance.filter((a: any) => a.status === 'PRESENT').length;
-        return Math.round((presentCount / student.attendance.length) * 100);
-    }, [student]);
+        if (!effectiveStudent?.attendance || effectiveStudent.attendance.length === 0) return 85;
+        const presentCount = effectiveStudent.attendance.filter((a: any) => a.status === 'PRESENT').length;
+        return Math.round((presentCount / effectiveStudent.attendance.length) * 100);
+    }, [effectiveStudent]);
 
     const visaDaysLeft = useMemo(() => {
-        if (!student?.visa?.end_date) return null;
+        if (!effectiveStudent?.visa?.end_date) return null;
         try {
-            return differenceInDays(parseISO(student.visa.end_date), new Date());
+            return differenceInDays(parseISO(effectiveStudent.visa.end_date), new Date());
         } catch (e) {
             return null;
         }
-    }, [student]);
+    }, [effectiveStudent]);
 
     const cardData = useMemo(() => {
-        if (!student) return null;
+        if (!effectiveStudent) return null;
         return {
-            id: student.id,
-            schoolId: student.student_id_number || "—",
-            iin: (student as any).iin || student.passport_number || "—",
-            fullName: student.full_name || "—",
-            dateOfBirth: student.date_of_birth ? format(parseISO(student.date_of_birth), 'dd.MM.yyyy') : "—",
-            sex: student.sex || "—",
-            nationality: student.nationality || "—",
-            photo: student.photo_url,
-            schoolName: student.institution?.name || "—",
-            schoolAddress: student.institution?.address || "—",
-            schoolLogo: student.institution?.logo_url,
-            dateOfIssue: student.created_at ? format(parseISO(student.created_at), 'dd.MM.yyyy') : "—",
-            dateOfExpiry: student.visa?.end_date ? format(parseISO(student.visa.end_date), 'dd.MM.yyyy') : "—",
-            phoneNumber: student.phone || "—",
-            cityRegion: student.institution?.city || "Almaty",
+            id: effectiveStudent.id,
+            schoolId: effectiveStudent.student_id_number || "—",
+            iin: (effectiveStudent as any).iin || effectiveStudent.passport_number || "—",
+            fullName: effectiveStudent.full_name || "—",
+            dateOfBirth: effectiveStudent.date_of_birth ? format(parseISO(effectiveStudent.date_of_birth), 'dd.MM.yyyy') : "—",
+            sex: effectiveStudent.sex || "—",
+            nationality: effectiveStudent.nationality || "—",
+            photo: effectiveStudent.photo_url,
+            schoolName: effectiveStudent.institution?.name || "—",
+            schoolAddress: effectiveStudent.institution?.address || "—",
+            schoolLogo: effectiveStudent.institution?.logo_url,
+            dateOfIssue: effectiveStudent.created_at ? format(parseISO(effectiveStudent.created_at), 'dd.MM.yyyy') : "—",
+            dateOfExpiry: effectiveStudent.visa?.end_date ? format(parseISO(effectiveStudent.visa.end_date), 'dd.MM.yyyy') : "—",
+            phoneNumber: effectiveStudent.phone || "—",
+            cityRegion: effectiveStudent.institution?.city || "Almaty",
             qrData: undefined,
         };
-    }, [student]);
+    }, [effectiveStudent]);
 
     // ── Generate QR for card back ─────────────────────────────────────────────
     useEffect(() => {
-        if (!student?.student_id_number) return;
+        if (!effectiveStudent?.student_id_number) return;
         QRCode.toDataURL(
-            `${window.location.origin}/verify?card=${student.student_id_number}`,
+            `${window.location.origin}/verify?card=${effectiveStudent.student_id_number}`,
             { width: 431, margin: 1, errorCorrectionLevel: 'H', color: { dark: '#000000', light: '#ffffff' } }
         ).then(setQrCodeUrl).catch(console.error);
-    }, [student?.student_id_number]);
+    }, [effectiveStudent?.student_id_number]);
 
     // ── PDF Download — captures both card faces ───────────────────────────────
     const downloadIdPdf = async () => {
@@ -132,7 +165,7 @@ export default function StudentDashboard() {
         finally { setIsExportingPdf(false); }
     };
 
-    if (isLoading) {
+    if (isLoading && !offlineStudent) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', bgcolor: '#f8fafc' }}>
                 <CircularProgress />
@@ -140,7 +173,7 @@ export default function StudentDashboard() {
         );
     }
 
-    if (!student) {
+    if (!effectiveStudent) {
         return (
             <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
                 <Typography variant="h6" color="text.secondary">No student record linked to this account.</Typography>
@@ -151,17 +184,35 @@ export default function StudentDashboard() {
 
     return (
         <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh', pb: 8 }}>
+            {/* Offline Mode Banner */}
+            {(isOffline || offlineStudent) && (
+                <Alert
+                    severity="warning"
+                    icon={false}
+                    sx={{
+                        borderRadius: 0,
+                        fontWeight: 700,
+                        justifyContent: 'center',
+                        bgcolor: '#FEF3C7',
+                        color: '#92400E',
+                        borderBottom: '2px solid #FCD34D'
+                    }}
+                >
+                    📴 {t('common.offlineBanner')}
+                </Alert>
+            )}
+
             {/* Header / Stats Bar */}
             <Box sx={{ bgcolor: 'white', px: 4, py: 3, borderBottom: '1px solid #E2E8F0', mb: 4 }}>
                 <Container maxWidth="xl">
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} justifyContent="space-between" alignItems="center">
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Avatar
-                                src={student.photo_url || ''}
+                                src={effectiveStudent.photo_url || ''}
                                 sx={{ width: 64, height: 64, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                             />
                             <Box>
-                                <Typography variant="h5" fontWeight={900} color="#1E293B">Welcome back, {student.full_name?.split(' ')[0]}!</Typography>
+                                <Typography variant="h5" fontWeight={900} color="#1E293B">Welcome back, {effectiveStudent.full_name?.split(' ')[0]}!</Typography>
                                 <Stack direction="row" spacing={1} alignItems="center">
                                     <SuccessIcon sx={{ fontSize: 16, color: '#10B981' }} />
                                     <Typography variant="body2" fontWeight={600} color="#64748B">System Status: <span style={{ color: '#10B981' }}>Active</span></Typography>
@@ -251,7 +302,15 @@ export default function StudentDashboard() {
                     </Button>
                 </Paper>
 
-                <Grid container spacing={4}>
+                <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                    <Tabs value={tabValue} onChange={(_, nv) => setTabValue(nv)}>
+                        <Tab label={t('studentDashboard.overview', 'Overview')} sx={{ fontWeight: 700 }} />
+                        <Tab label={t('studentDashboard.messages', 'Messages')} sx={{ fontWeight: 700 }} />
+                    </Tabs>
+                </Box>
+
+                {tabValue === 0 && (
+                    <Grid container spacing={4}>
                     {/* Left Column - Main Details */}
                     <Grid size={{ xs: 12, lg: 8 }}>
                         <Stack spacing={4}>
@@ -387,20 +446,20 @@ export default function StudentDashboard() {
                                         <TableBody>
                                             <TableRow>
                                                 <TableCell sx={{ border: 'none', color: '#64748B', fontWeight: 700 }}>Visa Type</TableCell>
-                                                <TableCell sx={{ border: 'none', fontWeight: 800 }}>{student.visa?.visa_type || 'Study (C9)'}</TableCell>
+                                                <TableCell sx={{ border: 'none', fontWeight: 800 }}>{effectiveStudent.visa?.visa_type || 'Study (C9)'}</TableCell>
                                                 <TableCell sx={{ border: 'none', color: '#64748B', fontWeight: 700 }}>Status</TableCell>
                                                 <TableCell sx={{ border: 'none' }}>
-                                                    <Chip label={student.visa?.status} size="small" color="success" sx={{ fontWeight: 800 }} />
+                                                    <Chip label={effectiveStudent.visa?.status} size="small" color="success" sx={{ fontWeight: 800 }} />
                                                 </TableCell>
                                             </TableRow>
                                             <TableRow>
                                                 <TableCell sx={{ border: 'none', color: '#64748B', fontWeight: 700 }}>Date of Issue</TableCell>
                                                 <TableCell sx={{ border: 'none', fontWeight: 800 }}>
-                                                    {student.visa?.issued_at ? format(parseISO(student.visa.issued_at), 'MMM dd, yyyy') : '—'}
+                                                    {effectiveStudent.visa?.issued_at ? format(parseISO(student.visa.issued_at), 'MMM dd, yyyy') : '—'}
                                                 </TableCell>
                                                 <TableCell sx={{ border: 'none', color: '#64748B', fontWeight: 700 }}>Date of Expiry</TableCell>
                                                 <TableCell sx={{ border: 'none', fontWeight: 800, color: 'error.main' }}>
-                                                    {student.visa?.end_date ? format(parseISO(student.visa.end_date), 'MMM dd, yyyy') : '—'}
+                                                    {effectiveStudent.visa?.end_date ? format(parseISO(student.visa.end_date), 'MMM dd, yyyy') : '—'}
                                                 </TableCell>
                                             </TableRow>
                                         </TableBody>
@@ -586,12 +645,19 @@ export default function StudentDashboard() {
                         </Stack>
                     </Grid>
                 </Grid>
+                )}
+
+                {tabValue === 1 && (
+                    <Box sx={{ mt: 2 }}>
+                        <MessagesTab />
+                    </Box>
+                )}
             </Container>
 
             <VisaRenewalWizard
                 open={renewalOpen}
-                studentId={student.id}
-                institutionId={student.institution_id}
+                studentId={effectiveStudent.id}
+                institutionId={effectiveStudent.institution_id}
                 onClose={() => setRenewalOpen(false)}
             />
 

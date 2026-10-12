@@ -31,9 +31,6 @@ import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import QRCode from "qrcode";
 
-// Card spec (must match DigitalStudentCard.tsx constants)
-const CARD_W = 1013;
-const CARD_H = 638;
 // CR80 physical card in mm
 const CR80_W_MM = 85.6;
 const CR80_H_MM = 54.0;

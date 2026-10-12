@@ -4,7 +4,7 @@ import {
     TableCell, TableHead, TableRow, LinearProgress,
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
-import { format, parseISO, startOfMonth, endOfMonth } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 interface AttendanceRecord {
     date: string;

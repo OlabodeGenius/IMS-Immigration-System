@@ -8,6 +8,7 @@ import { CriticalAlerts } from "./CriticalAlerts";
 import { useGlobalKPIs, usePresenceTrends } from "../../../hooks/useAnalytics";
 import { AttendanceTrendChart } from "../AttendanceTrendChart";
 import { InstitutionStudentsChart } from "./InstitutionStudentsChart";
+import { WorldHeatmap } from "./WorldHeatmap";
 
 const CITIES = ["National", "Almaty", "Astana", "Shymkent", "Karaganda", "Aktobe", "Atyrau", "Pavlodar", "Oskemen", "Taraz"];
 
@@ -160,6 +161,7 @@ export function OverviewTab() {
                                 height={250}
                             />
                         </Paper>
+                        <WorldHeatmap />
                         <InstitutionStudentsChart city={selectedCity} />
                         <ComplianceTable city={selectedCity} />
                     </Stack>

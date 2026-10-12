@@ -17,6 +17,42 @@ export function useAnalyticsSummary() {
     });
 }
 
+// ── HEATMAP MOCK DATA ───────────────────────────────────────────────
+
+export interface HeatmapDataPoint {
+    id: string;      // ISO-3166-1 alpha-3 country code
+    name: string;    // Country name
+    students: number; // Density
+    expiringVisas: number; // Risk
+}
+
+export function useGlobalHeatmapData() {
+    return useQuery({
+        queryKey: ["global_heatmap_data"],
+        queryFn: async (): Promise<HeatmapDataPoint[]> => {
+            // Simulated global student demographic distribution
+            return [
+                { id: "IND", name: "India", students: 12500, expiringVisas: 420 },
+                { id: "CHN", name: "China", students: 8400, expiringVisas: 210 },
+                { id: "UZB", name: "Uzbekistan", students: 15600, expiringVisas: 890 },
+                { id: "RUS", name: "Russia", students: 9200, expiringVisas: 150 },
+                { id: "PAK", name: "Pakistan", students: 6300, expiringVisas: 380 },
+                { id: "TJK", name: "Tajikistan", students: 5100, expiringVisas: 210 },
+                { id: "KGZ", name: "Kyrgyzstan", students: 4800, expiringVisas: 190 },
+                { id: "NGA", name: "Nigeria", students: 3200, expiringVisas: 450 },
+                { id: "TKM", name: "Turkmenistan", students: 3800, expiringVisas: 110 },
+                { id: "AFG", name: "Afghanistan", students: 2100, expiringVisas: 600 }, // High risk mock
+                { id: "USA", name: "United States", students: 1200, expiringVisas: 30 },
+                { id: "GBR", name: "United Kingdom", students: 800, expiringVisas: 15 },
+                { id: "FRA", name: "France", students: 500, expiringVisas: 10 },
+                { id: "TUR", name: "Turkey", students: 2500, expiringVisas: 80 },
+                { id: "KOR", name: "South Korea", students: 3100, expiringVisas: 45 },
+            ];
+        },
+        staleTime: 1000 * 60 * 60, // 1 hour
+    });
+}
+
 export function useInstitutionMetrics(institutionId?: string) {
     return useQuery({
         queryKey: ["institution_metrics", institutionId],

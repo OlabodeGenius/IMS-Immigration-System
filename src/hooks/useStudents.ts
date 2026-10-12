@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabaseClient";
 import type { Student } from "../types";
+import { saveStudentProfile } from "../lib/offlineDB";
 
 // ===================================
 // Fetch Hooks
@@ -73,6 +74,12 @@ export function useMyStudentProfile() {
                 if (error.code === 'PGRST116') return null; // Not found
                 throw error;
             }
+
+            // ── Persist profile to IndexedDB for offline Digital-ID access ──
+            if (data) {
+                saveStudentProfile(data).catch(() => {/* silently ignore */});
+            }
+
             return data as any;
         },
     });

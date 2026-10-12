@@ -25,6 +25,8 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "../auth/AuthProvider";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 const registerSchema = z.object({
     email: z.string().email("Invalid email address"),
@@ -42,6 +44,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function Register() {
     const navigate = useNavigate();
     const { signUp } = useAuth();
+    const { t } = useTranslation();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [authError, setAuthError] = useState<string | null>(null);
@@ -88,23 +91,16 @@ export default function Register() {
             }}
         >
             <Container maxWidth="sm">
-                {/* Back to Home Button */}
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
                 <Button
                     component={RouterLink}
                     to="/"
                     startIcon={<ArrowBack />}
-                    sx={{
-                        mb: 3,
-                        color: "text.secondary",
-                        textTransform: "none",
-                        fontWeight: 600,
-                        "&:hover": {
-                            color: "primary.main",
-                        },
-                    }}
+                    sx={{ color: "text.secondary", textTransform: "none", fontWeight: 600, "&:hover": { color: "primary.main" } }}
                 >
-                    Back to Home
+                    {t('register.backToHome')}
                 </Button>
+                <LanguageSwitcher compact />
 
                 <Paper
                     elevation={0}
@@ -294,8 +290,9 @@ export default function Register() {
                     align="center"
                     sx={{ mt: 3 }}
                 >
-                    IMS-IS Platform © 2026
+                    {t('register.footer')}
                 </Typography>
+            </Stack>
             </Container>
         </Box>
     );

@@ -4,15 +4,13 @@ import { useState } from "react";
 import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 import { DashboardShell } from "../components/DashboardShell";
-import {
-    Person as PersonIcon,
-    Email as EmailIcon,
-    Shield as ShieldIcon
-} from "@mui/icons-material";
+import { Person as PersonIcon, Email as EmailIcon, Shield as ShieldIcon } from "@mui/icons-material";
 import { supabase } from "../lib/supabaseClient";
+import { useTranslation } from "react-i18next";
 
 export default function SettingsPage() {
     const { profile, user } = useAuth();
+    const { t } = useTranslation();
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +39,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <DashboardShell title="Account Settings">
+        <DashboardShell title={t('settings.title')}>
             <Container maxWidth="md" sx={{ py: 0 }}>
 
                 <Grid container spacing={4}>
